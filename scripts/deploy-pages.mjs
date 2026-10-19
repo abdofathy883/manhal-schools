@@ -5,8 +5,10 @@ import { copyFileSync, cpSync, mkdtempSync, rmSync, writeFileSync } from 'node:f
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
-const run = (cmd, args, options = {}) => execFileSync(cmd, args, { stdio: 'inherit', shell: process.platform === 'win32', ...options });
-const read = (cmd, args) => execFileSync(cmd, args, { encoding: 'utf8', shell: process.platform === 'win32' }).trim();
+// Only `npx` needs a shell on Windows; git arguments (commit message) must not go through one.
+const shell = (cmd) => process.platform === 'win32' && cmd === 'npx';
+const run = (cmd, args, options = {}) => execFileSync(cmd, args, { stdio: 'inherit', shell: shell(cmd), ...options });
+const read = (cmd, args) => execFileSync(cmd, args, { encoding: 'utf8', shell: shell(cmd) }).trim();
 
 const remote = read('git', ['remote', 'get-url', 'origin']);
 const repo = remote.replace(/\.git$/, '').split(/[/:]/).pop();
