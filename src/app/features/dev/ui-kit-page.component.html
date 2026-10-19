@@ -1,0 +1,184 @@
+<app-page-header title="معرض مكونات الواجهة" subtitle="صفحة فحص للمرحلة الأولى: التحقق من اتجاه RTL في مكونات Bootstrap وng-bootstrap.">
+  <button type="button" class="btn btn-primary" (click)="toast()"><i class="bi bi-bell me-2" aria-hidden="true"></i>إظهار إشعار</button>
+</app-page-header>
+
+<section class="mb-4" aria-labelledby="kit-stats">
+  <h2 id="kit-stats" class="h5 mb-3">بطاقات المؤشرات</h2>
+  <div class="row g-3">
+    <div class="col-6 col-lg-3"><app-stat-card label="طلبات مفتوحة" [value]="42" icon="bi-folder2-open" /></div>
+    <div class="col-6 col-lg-3"><app-stat-card label="متأخرة" [value]="6" icon="bi-alarm" tone="danger" hint="تجاوزت مدة الاستجابة" /></div>
+    <div class="col-6 col-lg-3"><app-stat-card label="بانتظار اعتماد" [value]="10" icon="bi-hourglass-split" tone="warning" /></div>
+    <div class="col-6 col-lg-3"><app-stat-card label="تكلفة الشهر" [value]="(128500 | money)" icon="bi-cash-coin" tone="success" /></div>
+  </div>
+</section>
+
+<section class="card mb-4">
+  <div class="card-header">الحالات والأولويات</div>
+  <div class="card-body">
+    <div class="d-flex flex-wrap gap-2 mb-3">
+      @for (s of statuses; track s) {
+        <app-status-badge [status]="s" />
+      }
+      <app-status-badge status="on_hold" holdReason="parts" />
+    </div>
+    <div class="d-flex flex-wrap gap-2 mb-3">
+      <app-priority-badge priority="normal" />
+      <app-priority-badge priority="high" />
+      <app-priority-badge priority="urgent" />
+      <app-priority-badge priority="emergency" />
+      <app-priority-badge priority="preventive" />
+    </div>
+    <app-status-stepper status="in_progress" />
+  </div>
+</section>
+
+<div class="row g-4 mb-4">
+  <div class="col-lg-6">
+    <section class="card h-100">
+      <div class="card-header">الخط الزمني</div>
+      <div class="card-body"><app-timeline [events]="events" /></div>
+    </section>
+  </div>
+  <div class="col-lg-6">
+    <section class="card h-100">
+      <div class="card-header">المرفقات والأرقام</div>
+      <div class="card-body">
+        <div class="d-flex flex-wrap gap-2 mb-3">
+          @for (f of files; track f.id) {
+            <app-file-chip [file]="f" [removable]="true" />
+          }
+        </div>
+        <p class="mb-1">رقم المرجع: <span class="ltr-inline fw-bold">MNH-2026-000123</span></p>
+        <p class="mb-1">رقم اللوحة: <span class="ltr-inline fw-bold">أ ب ج 1234</span></p>
+        <p class="mb-1">الجوال: <span class="ltr-inline fw-bold">0551230001</span></p>
+        <p class="mb-3">التاريخ: <span class="ltr-inline">{{ today | arDate }}</span> — المبلغ: {{ 1234.5 | money }}</p>
+        <p class="mb-0 text-truncate" style="max-inline-size: 18rem">نص عربي طويل جدًا لاختبار القص والتفاف الأسطر داخل البطاقات والجداول دون أن ينكسر التخطيط في أي حجم شاشة.</p>
+      </div>
+    </section>
+  </div>
+</div>
+
+<section class="card mb-4">
+  <div class="card-header">مكونات ng-bootstrap (اختبار RTL)</div>
+  <div class="card-body">
+    <div class="d-flex flex-wrap gap-2 mb-4">
+      <div ngbDropdown class="d-inline-block">
+        <button type="button" class="btn btn-outline-primary" ngbDropdownToggle id="kit-dd">قائمة منسدلة</button>
+        <div ngbDropdownMenu aria-labelledby="kit-dd">
+          <button ngbDropdownItem type="button">الخيار الأول</button>
+          <button ngbDropdownItem type="button">الخيار الثاني</button>
+          <button ngbDropdownItem type="button">الخيار الثالث</button>
+        </div>
+      </div>
+
+      <div ngbDropdown placement="bottom-end" class="d-inline-block">
+        <button type="button" class="btn btn-outline-secondary" ngbDropdownToggle id="kit-dd2">محاذاة لنهاية الاتجاه</button>
+        <div ngbDropdownMenu aria-labelledby="kit-dd2">
+          <button ngbDropdownItem type="button">خيار ١</button>
+          <button ngbDropdownItem type="button">خيار ٢</button>
+        </div>
+      </div>
+
+      <button type="button" class="btn btn-outline-primary" ngbTooltip="تلميح بالعربية" placement="top">تلميح</button>
+      <button type="button" class="btn btn-outline-primary" ngbPopover="محتوى النافذة المنبثقة" popoverTitle="عنوان" placement="bottom">نافذة منبثقة</button>
+
+      <ng-template #modalTpl let-modal>
+        <div class="modal-header">
+          <h2 class="modal-title h5">نافذة حوار</h2>
+          <button type="button" class="btn-close" aria-label="إغلاق" (click)="modal.dismiss()"></button>
+        </div>
+        <div class="modal-body">تأكد من أن زر الإغلاق في الجهة الصحيحة وأن النص محاذٍ للبداية.</div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-primary" (click)="modal.close()">موافق</button>
+          <button type="button" class="btn btn-outline-secondary" (click)="modal.dismiss()">إلغاء</button>
+        </div>
+      </ng-template>
+      <button type="button" class="btn btn-primary" (click)="openModal(modalTpl)">فتح نافذة حوار</button>
+
+      <ng-template #offTpl let-offcanvas>
+        <div class="offcanvas-header">
+          <h2 class="offcanvas-title h5" id="kit-offcanvas-title">لوحة جانبية</h2>
+          <button type="button" class="btn-close" aria-label="إغلاق" (click)="offcanvas.dismiss()"></button>
+        </div>
+        <div class="offcanvas-body">يجب أن تظهر هذه اللوحة من جهة بداية الاتجاه (اليمين).</div>
+      </ng-template>
+      <button type="button" class="btn btn-info" (click)="openOffcanvas(offTpl)">فتح لوحة جانبية</button>
+    </div>
+
+    <div class="row g-4">
+      <div class="col-md-6 col-lg-4">
+        <label class="form-label" for="kit-date">منتقي التاريخ (يبدأ الأسبوع بالأحد)</label>
+        <div class="input-group">
+          <input id="kit-date" class="form-control ltr" placeholder="dd/MM/yyyy" ngbDatepicker #d="ngbDatepicker" [formControl]="dateControl" [firstDayOfWeek]="7" />
+          <button class="btn btn-outline-secondary" type="button" (click)="d.toggle()" aria-label="فتح التقويم"><i class="bi bi-calendar3" aria-hidden="true"></i></button>
+        </div>
+      </div>
+      <div class="col-md-6 col-lg-4">
+        <label class="form-label" for="kit-typeahead">بحث تلقائي</label>
+        <input id="kit-typeahead" class="form-control" [formControl]="branchControl" [ngbTypeahead]="searchBranches" placeholder="اكتب «فرع»…" />
+      </div>
+      <div class="col-lg-4">
+        <span class="form-label d-block">ترقيم الصفحات</span>
+        <ngb-pagination [collectionSize]="120" [page]="page()" (pageChange)="page.set($event)" [pageSize]="10" [maxSize]="5" [rotate]="true" />
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="row g-4 mb-4">
+  <div class="col-lg-6">
+    <section class="card h-100">
+      <div class="card-header">التبويبات</div>
+      <div class="card-body">
+        <ul ngbNav #nav="ngbNav" [activeId]="activeTab()" (activeIdChange)="activeTab.set($event)" class="nav-tabs">
+          <li [ngbNavItem]="1"><button ngbNavLink type="button">ظاهر لمقدم الطلب</button><ng-template ngbNavContent><p class="pt-3 mb-0">محتوى التبويب الأول.</p></ng-template></li>
+          <li [ngbNavItem]="2"><button ngbNavLink type="button">داخلي للمنفذين</button><ng-template ngbNavContent><p class="pt-3 mb-0">محتوى التبويب الثاني.</p></ng-template></li>
+        </ul>
+        <div [ngbNavOutlet]="nav"></div>
+      </div>
+    </section>
+  </div>
+  <div class="col-lg-6">
+    <section class="card h-100">
+      <div class="card-header">الأكورديون</div>
+      <div class="card-body">
+        <div ngbAccordion>
+          <div ngbAccordionItem [collapsed]="false">
+            <h3 ngbAccordionHeader><button ngbAccordionButton type="button">القسم الأول</button></h3>
+            <div ngbAccordionCollapse><div ngbAccordionBody><ng-template>محتوى القسم الأول.</ng-template></div></div>
+          </div>
+          <div ngbAccordionItem>
+            <h3 ngbAccordionHeader><button ngbAccordionButton type="button">القسم الثاني</button></h3>
+            <div ngbAccordionCollapse><div ngbAccordionBody><ng-template>محتوى القسم الثاني.</ng-template></div></div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+</div>
+
+<div class="row g-4 mb-4">
+  <div class="col-lg-6">
+    <section class="card h-100">
+      <div class="card-header">الجدول</div>
+      <div class="table-responsive">
+        <table class="table table-hover mb-0">
+          <thead><tr><th scope="col">رقم الطلب</th><th scope="col">الخدمة</th><th scope="col">الحالة</th><th scope="col">التكلفة</th></tr></thead>
+          <tbody>
+            <tr><td><span class="ltr-inline">MNH-2026-000123</span></td><td>صيانة مباني</td><td><app-status-badge status="on_hold" holdReason="parts" /></td><td>{{ 850 | money }}</td></tr>
+            <tr><td><span class="ltr-inline">MNH-2026-000124</span></td><td>حجز باص</td><td><app-status-badge status="approved" /></td><td>—</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+  <div class="col-lg-6">
+    <section class="card h-100">
+      <div class="card-header">حالات التحميل والفراغ</div>
+      <div class="card-body">
+        <app-skeleton-rows [count]="3" />
+        <app-empty-state title="لا توجد طلبات" message="ابدأ بتقديم طلب جديد من كتالوج الخدمات." />
+      </div>
+    </section>
+  </div>
+</div>

@@ -1,0 +1,74 @@
+// Brand tokens. Bootstrap ships precompiled (RTL build), so the brand is applied
+// through CSS custom properties and component-level variable overrides.
+$navy: #1b4f7b;
+$teal: #2b93b0;
+$orange: #f5a623;
+$surface: #f2f7fa;
+$success: #2e7d4f;
+$danger: #c0392b;
+$warning: #e0a100;
+
+:root {
+  --mnh-navy: #{$navy};
+  --mnh-navy-dark: #143b5d;
+  --mnh-teal: #{$teal};
+  --mnh-accent: #{$orange};
+  --mnh-surface: #{$surface};
+  --mnh-border: #dbe5ec;
+  --mnh-ink: #1d2b36;
+  --mnh-muted: #5a6b78;
+  --mnh-radius: 14px;
+  --mnh-radius-sm: 10px;
+  --mnh-shadow: 0 2px 6px rgb(27 79 123 / 6%), 0 8px 24px rgb(27 79 123 / 7%);
+  --mnh-shadow-lg: 0 12px 40px rgb(27 79 123 / 18%);
+  --mnh-sidebar-width: 17rem;
+  --mnh-sidebar-collapsed: 4.5rem;
+  --mnh-topbar-height: 4rem;
+  --mnh-demobar-height: 2.5rem;
+
+  --bs-font-sans-serif: 'IBM Plex Sans Arabic', 'Segoe UI', Tahoma, sans-serif;
+  --bs-body-font-family: var(--bs-font-sans-serif);
+  --bs-body-font-size: 0.95rem;
+  --bs-body-line-height: 1.7;
+  --bs-body-color: var(--mnh-ink);
+  --bs-body-color-rgb: 29, 43, 54;
+  --bs-body-bg: var(--mnh-surface);
+  --bs-body-bg-rgb: 242, 247, 250;
+  --bs-secondary-color: var(--mnh-muted);
+  --bs-border-color: var(--mnh-border);
+  --bs-border-radius: var(--mnh-radius-sm);
+  --bs-border-radius-lg: var(--mnh-radius);
+  --bs-link-color: #{$navy};
+  --bs-link-color-rgb: 27, 79, 123;
+  --bs-link-hover-color: #{$teal};
+  --bs-link-hover-color-rgb: 43, 147, 176;
+  --bs-focus-ring-color: rgb(43 147 176 / 35%);
+
+  --bs-primary: #{$navy};
+  --bs-primary-rgb: 27, 79, 123;
+  --bs-primary-text-emphasis: #123552;
+  --bs-primary-bg-subtle: #e3edf5;
+  --bs-primary-border-subtle: #b5cde0;
+  --bs-secondary: #5a6b78;
+  --bs-secondary-rgb: 90, 107, 120;
+  --bs-info: #{$teal};
+  --bs-info-rgb: 43, 147, 176;
+  --bs-info-text-emphasis: #145568;
+  --bs-info-bg-subtle: #def1f6;
+  --bs-info-border-subtle: #aadbe8;
+  --bs-success: #{$success};
+  --bs-success-rgb: 46, 125, 79;
+  --bs-success-text-emphasis: #1b4d2f;
+  --bs-success-bg-subtle: #e0f2e7;
+  --bs-success-border-subtle: #a9d8bb;
+  --bs-danger: #{$danger};
+  --bs-danger-rgb: 192, 57, 43;
+  --bs-danger-text-emphasis: #7a2018;
+  --bs-danger-bg-subtle: #fbe4e1;
+  --bs-danger-border-subtle: #efb3ac;
+  --bs-warning: #{$warning};
+  --bs-warning-rgb: 224, 161, 0;
+  --bs-warning-text-emphasis: #6b4d00;
+  --bs-warning-bg-subtle: #fdf1cc;
+  --bs-warning-border-subtle: #f2d98a;
+}

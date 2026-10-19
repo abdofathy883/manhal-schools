@@ -1,0 +1,492 @@
+// Single place that customises Bootstrap components so the app does not look like default Bootstrap.
+// Logical properties only — no physical left/right anywhere.
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-feature-settings: 'tnum' 0;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3, h4, h5, h6, .h1, .h2, .h3, .h4, .h5, .h6, .font-display {
+  font-family: 'Cairo', var(--bs-font-sans-serif);
+  font-weight: 700;
+  color: var(--mnh-navy);
+  line-height: 1.4;
+}
+
+a {
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+}
+
+:focus-visible {
+  outline: 3px solid var(--mnh-teal);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+// Numbers / IDs / plates / phones stay left-to-right inside RTL text.
+.ltr, [dir='ltr'] {
+  direction: ltr;
+  unicode-bidi: isolate;
+}
+
+.ltr-inline {
+  display: inline-block;
+  direction: ltr;
+  unicode-bidi: isolate;
+  text-align: start;
+}
+
+// Directional icons mirror automatically in RTL via this helper.
+.bi-flip-rtl {
+  transform: scaleX(-1);
+}
+
+// Cards
+.card {
+  --bs-card-border-color: var(--mnh-border);
+  --bs-card-border-radius: var(--mnh-radius);
+  --bs-card-inner-border-radius: calc(var(--mnh-radius) - 1px);
+  --bs-card-cap-bg: transparent;
+  --bs-card-cap-padding-y: 1rem;
+  --bs-card-spacer-y: 1.25rem;
+  --bs-card-spacer-x: 1.25rem;
+  box-shadow: var(--mnh-shadow);
+  border-color: transparent;
+}
+
+.card-header {
+  font-family: 'Cairo', var(--bs-font-sans-serif);
+  font-weight: 700;
+  color: var(--mnh-navy);
+  border-bottom-color: var(--mnh-border);
+}
+
+// Buttons
+.btn {
+  --bs-btn-border-radius: var(--mnh-radius-sm);
+  --bs-btn-padding-x: 1.15rem;
+  --bs-btn-padding-y: 0.5rem;
+  --bs-btn-font-weight: 600;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
+
+  &:active:not(:disabled) {
+    transform: translateY(1px);
+  }
+}
+
+.btn-primary {
+  --bs-btn-bg: var(--mnh-navy);
+  --bs-btn-border-color: var(--mnh-navy);
+  --bs-btn-hover-bg: var(--mnh-navy-dark);
+  --bs-btn-hover-border-color: var(--mnh-navy-dark);
+  --bs-btn-active-bg: var(--mnh-navy-dark);
+  --bs-btn-active-border-color: var(--mnh-navy-dark);
+  --bs-btn-disabled-bg: var(--mnh-navy);
+  --bs-btn-disabled-border-color: var(--mnh-navy);
+  --bs-btn-focus-shadow-rgb: 43, 147, 176;
+}
+
+.btn-outline-primary {
+  --bs-btn-color: var(--mnh-navy);
+  --bs-btn-border-color: var(--mnh-navy);
+  --bs-btn-hover-bg: var(--mnh-navy);
+  --bs-btn-hover-border-color: var(--mnh-navy);
+  --bs-btn-active-bg: var(--mnh-navy);
+  --bs-btn-active-border-color: var(--mnh-navy);
+  --bs-btn-disabled-color: var(--mnh-navy);
+  --bs-btn-disabled-border-color: var(--mnh-navy);
+}
+
+.btn-info {
+  --bs-btn-color: #fff;
+  --bs-btn-bg: var(--mnh-teal);
+  --bs-btn-border-color: var(--mnh-teal);
+  --bs-btn-hover-color: #fff;
+  --bs-btn-hover-bg: #237d96;
+  --bs-btn-hover-border-color: #237d96;
+  --bs-btn-active-color: #fff;
+  --bs-btn-active-bg: #237d96;
+  --bs-btn-active-border-color: #237d96;
+}
+
+.btn-accent {
+  --bs-btn-color: #2a1a00;
+  --bs-btn-bg: var(--mnh-accent);
+  --bs-btn-border-color: var(--mnh-accent);
+  --bs-btn-hover-color: #2a1a00;
+  --bs-btn-hover-bg: #e29a14;
+  --bs-btn-hover-border-color: #e29a14;
+  --bs-btn-active-bg: #e29a14;
+  --bs-btn-active-border-color: #e29a14;
+}
+
+// Forms
+.form-label {
+  font-weight: 600;
+  color: var(--mnh-navy);
+  margin-block-end: 0.35rem;
+}
+
+.form-control,
+.form-select {
+  border-color: #c5d3dd;
+  padding-block: 0.55rem;
+
+  &:focus {
+    border-color: var(--mnh-teal);
+    box-shadow: 0 0 0 0.25rem rgb(43 147 176 / 20%);
+  }
+}
+
+.form-check-input:checked {
+  background-color: var(--mnh-navy);
+  border-color: var(--mnh-navy);
+}
+
+.invalid-feedback {
+  font-size: 0.85rem;
+}
+
+// Tables
+.table {
+  --bs-table-bg: transparent;
+  --bs-table-striped-bg: rgb(27 79 123 / 3%);
+  --bs-table-hover-bg: rgb(43 147 176 / 7%);
+
+  > thead > tr > th {
+    background: #eaf1f6;
+    color: var(--mnh-navy);
+    font-weight: 700;
+    font-size: 0.85rem;
+    white-space: nowrap;
+    border-bottom: 0;
+    text-align: start;
+  }
+
+  th, td {
+    text-align: start;
+    vertical-align: middle;
+  }
+}
+
+// Badges
+.badge {
+  font-weight: 600;
+  padding: 0.4em 0.75em;
+  border-radius: 999px;
+}
+
+// Navs / tabs
+.nav-tabs {
+  --bs-nav-tabs-border-color: var(--mnh-border);
+  --bs-nav-tabs-link-active-color: var(--mnh-navy);
+  --bs-nav-tabs-link-active-border-color: var(--mnh-border) var(--mnh-border) #fff;
+
+  .nav-link {
+    color: var(--mnh-muted);
+    font-weight: 600;
+
+    &.active {
+      border-block-end-color: transparent;
+    }
+  }
+}
+
+.nav-pills {
+  --bs-nav-pills-link-active-bg: var(--mnh-navy);
+  --bs-nav-pills-border-radius: var(--mnh-radius-sm);
+}
+
+.dropdown-menu {
+  --bs-dropdown-border-radius: var(--mnh-radius-sm);
+  --bs-dropdown-border-color: var(--mnh-border);
+  --bs-dropdown-box-shadow: var(--mnh-shadow-lg);
+  --bs-dropdown-link-active-bg: var(--mnh-navy);
+  text-align: start;
+}
+
+.modal-content,
+.offcanvas {
+  border-radius: var(--mnh-radius);
+}
+
+.toast {
+  --bs-toast-border-radius: var(--mnh-radius-sm);
+  --bs-toast-box-shadow: var(--mnh-shadow-lg);
+}
+
+// Shared surfaces and helpers
+.surface-soft {
+  background: var(--mnh-surface);
+}
+
+.stat-gradient {
+  background: linear-gradient(135deg, var(--mnh-navy) 0%, #2a73a8 55%, var(--mnh-teal) 100%);
+  color: #fff;
+}
+
+.text-muted-ar {
+  color: var(--mnh-muted);
+}
+
+.page-enter {
+  animation: mnh-fade-up 0.28s ease both;
+}
+
+@keyframes mnh-fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes mnh-shake {
+  0%, 100% { transform: translateX(0); }
+  20%, 60% { transform: translateX(-8px); }
+  40%, 80% { transform: translateX(8px); }
+}
+
+.shake {
+  animation: mnh-shake 0.4s ease;
+}
+
+@keyframes mnh-shimmer {
+  to {
+    background-position-x: -200%;
+  }
+}
+
+.skeleton {
+  display: block;
+  border-radius: 8px;
+  min-height: 1rem;
+  background: linear-gradient(90deg, #e8eff4 25%, #f6fafc 37%, #e8eff4 63%);
+  background-size: 200% 100%;
+  animation: mnh-shimmer 1.4s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+@media print {
+  .no-print, .mnh-demobar, .mnh-sidebar, .mnh-topbar {
+    display: none !important;
+  }
+}
+
+.min-w-0 {
+  min-width: 0;
+}
+
+.request-row {
+  cursor: pointer;
+}
+
+.wb-card {
+  transition: box-shadow 0.15s ease;
+
+  &:hover {
+    box-shadow: var(--mnh-shadow-lg);
+  }
+}
+
+.border-dashed {
+  border-style: dashed !important;
+}
+
+// Bus availability calendar (green free, amber partly taken, grey full/closed, hatched blocked).
+.cal-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 0.35rem;
+}
+
+.cal-head > div {
+  text-align: center;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--mnh-muted);
+}
+
+.cal-day {
+  min-block-size: 3.6rem;
+  padding: 0.25rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.1rem;
+  line-height: 1.2;
+  border: 1px solid var(--mnh-border);
+  border-radius: var(--mnh-radius-sm);
+  background: #fff;
+  color: var(--mnh-ink);
+  transition: box-shadow 0.15s ease, transform 0.15s ease;
+
+  &:enabled:hover {
+    transform: translateY(-1px);
+    box-shadow: var(--mnh-shadow);
+  }
+
+  &:disabled {
+    cursor: not-allowed;
+  }
+}
+
+.cal-day--empty {
+  border: 0;
+  background: transparent;
+}
+
+.cal-day--available {
+  background: var(--bs-success-bg-subtle);
+  border-color: var(--bs-success-border-subtle);
+  color: var(--bs-success-text-emphasis);
+}
+
+.cal-day--partial {
+  background: var(--bs-warning-bg-subtle);
+  border-color: var(--bs-warning-border-subtle);
+  color: var(--bs-warning-text-emphasis);
+}
+
+.cal-day--full,
+.cal-day--closed {
+  background: #e6ebef;
+  border-color: #cfd8de;
+  color: #44535f;
+}
+
+.cal-day--blocked {
+  background: repeating-linear-gradient(135deg, #f4f6f8 0 6px, #dfe5ea 6px 12px);
+  border-color: #cfd8de;
+  color: #44535f;
+}
+
+.cal-day--today {
+  outline: 2px solid var(--mnh-teal);
+  outline-offset: -2px;
+}
+
+.cal-day--selected {
+  box-shadow: 0 0 0 3px var(--mnh-navy);
+}
+
+.cal-num {
+  font-weight: 700;
+}
+
+.cal-sub {
+  font-size: 0.7rem;
+}
+
+.cal-key {
+  display: inline-block;
+  inline-size: 1rem;
+  block-size: 1rem;
+  border-radius: 4px;
+  border: 1px solid var(--mnh-border);
+}
+
+// Time-window bar of one booking inside the standard 07:15-12:15 trip window.
+.cal-bar {
+  display: flex;
+  block-size: 0.5rem;
+  overflow: hidden;
+  border-radius: 99px;
+  background: #e3e9ee;
+}
+
+.cal-bar-fill {
+  display: block;
+  block-size: 100%;
+  border-radius: 99px;
+  background: var(--mnh-teal);
+}
+
+.cal-bar-wait {
+  background: repeating-linear-gradient(135deg, var(--bs-warning) 0 5px, #f2d98a 5px 10px);
+}
+
+// RBAC permission matrix: roles as columns, permissions as rows, sticky headers (logical sides, RTL-aware).
+.rbac-wrap {
+  max-block-size: 68vh;
+  overflow: auto;
+}
+
+.rbac-matrix {
+  min-inline-size: max-content;
+  border-collapse: separate;
+  border-spacing: 0;
+
+  th,
+  td {
+    background: #fff;
+    border-block-end: 1px solid var(--mnh-border);
+  }
+
+  thead th {
+    position: sticky;
+    inset-block-start: 0;
+    z-index: 3;
+    min-inline-size: 7.5rem;
+    background: var(--bs-primary-bg-subtle);
+    font-size: 0.82rem;
+  }
+
+  .rbac-perm {
+    position: sticky;
+    inset-inline-start: 0;
+    z-index: 2;
+    min-inline-size: 17rem;
+    max-inline-size: 20rem;
+    border-inline-end: 1px solid var(--mnh-border);
+  }
+
+  .rbac-corner {
+    z-index: 4;
+  }
+
+  .rbac-module th,
+  .rbac-module td {
+    background: var(--mnh-surface);
+  }
+
+  .rbac-cell {
+    min-inline-size: 7.5rem;
+  }
+
+  .rbac-scope {
+    margin-block-start: 0.25rem;
+    font-size: 0.75rem;
+    padding-block: 0.1rem;
+  }
+}
+
+.rbac-bar {
+  position: sticky;
+  inset-block-end: 1rem;
+  z-index: 20;
+  margin-block-start: 1rem;
+}
+
+.rbac-diff {
+  max-block-size: 14rem;
+  overflow: auto;
+}

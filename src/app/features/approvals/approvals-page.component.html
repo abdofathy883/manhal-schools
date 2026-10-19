@@ -1,0 +1,105 @@
+<app-page-header title="صندوق الاعتمادات" subtitle="الطلبات التي تنتظر قرارك. لكل قرار تُسجَّل هويتك ووقته، ويلزم ذكر سبب الرفض أو الإعادة." />
+
+<div class="row g-3 mb-4">
+  <div class="col-sm-6 col-xl-3"><app-stat-card label="بانتظار قراري" [value]="pending().length" icon="bi-hourglass-split" tone="warning" /></div>
+  <div class="col-sm-6 col-xl-3"><app-stat-card label="إجمالي القيمة المعروضة" [value]="(pendingValue() | money)" icon="bi-cash-coin" tone="primary" /></div>
+  <div class="col-sm-6 col-xl-3"><app-stat-card label="أقدم طلب منتظر" [value]="oldest()" icon="bi-clock-history" tone="danger" /></div>
+  <div class="col-sm-6 col-xl-3"><app-stat-card label="قرارات سابقة" [value]="decided().length" icon="bi-check2-all" tone="success" /></div>
+</div>
+
+<div class="btn-group mb-3" role="group" aria-label="عرض الاعتمادات">
+  <button type="button" class="btn" [class]="tab() === 'pending' ? 'btn-primary' : 'btn-outline-primary'" (click)="tab.set('pending')">بانتظار قراري ({{ pending().length }})</button>
+  <button type="button" class="btn" [class]="tab() === 'decided' ? 'btn-primary' : 'btn-outline-primary'" (click)="tab.set('decided')">قراراتي السابقة ({{ decided().length }})</button>
+</div>
+
+<section class="card" aria-live="polite">
+  @if (loading()) {
+    <div class="card-body"><app-skeleton-rows [count]="5" /></div>
+  } @else if (failed()) {
+    <app-empty-state title="تعذر تحميل الاعتمادات" message="حدث خطأ أثناء جلب البيانات." />
+  } @else if (tab() === 'pending') {
+    @if (pending().length === 0) {
+      <app-empty-state title="لا توجد طلبات بانتظار اعتمادك" message="سيصلك إشعار عند وصول طلب جديد إليك." />
+    } @else {
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+          <caption class="visually-hidden">الطلبات بانتظار الاعتماد</caption>
+          <thead>
+            <tr>
+              <th scope="col">الطلب</th>
+              <th scope="col">مقدم الطلب</th>
+              <th scope="col">القيمة</th>
+              <th scope="col">مرحلتك</th>
+              <th scope="col">الانتظار</th>
+              <th scope="col">الأولوية</th>
+              <th scope="col" class="text-end">القرار</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (row of pending(); track row.request.id) {
+              <tr>
+                <td style="max-inline-size: 20rem">
+                  <a class="fw-semibold text-decoration-none" [routerLink]="['/requests', row.request.id]">{{ row.request.titleAr }}</a>
+                  <div class="small text-muted-ar"><span class="ltr-inline">{{ row.request.refNo }}</span> · {{ serviceName(row.request) }}</div>
+                </td>
+                <td class="small">{{ row.request.requesterName }}<br /><span class="text-muted-ar">{{ place(row.request) }}</span></td>
+                <td>{{ row.request.estimatedValue > 0 ? (row.request.estimatedValue | money) : '—' }}</td>
+                <td>
+                  <span class="badge bg-warning-subtle text-warning-emphasis">{{ row.stepLabel }}</span>
+                  <div class="small text-muted-ar mt-1">
+                    @for (s of row.request.approvals; track s.id) {
+                      <i class="bi me-1" [class]="s.state === 'approved' ? 'bi-check-circle-fill text-success' : s.state === 'pending' ? 'bi-circle text-warning' : 'bi-dash-circle text-secondary'" [attr.title]="s.labelAr" aria-hidden="true"></i>
+                    }
+                  </div>
+                </td>
+                <td class="small">{{ row.waiting }}</td>
+                <td><app-priority-badge [priority]="row.request.priority" /></td>
+                <td class="text-end text-nowrap">
+                  @for (a of row.actions; track a.key) {
+                    <button type="button" class="btn btn-sm ms-1" [class]="tone(a)" [disabled]="busy() !== null" (click)="act(row, a)">
+                      <i class="bi me-1" [class]="a.icon" aria-hidden="true"></i>{{ a.labelAr }}
+                    </button>
+                  }
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  } @else {
+    @if (decided().length === 0) {
+      <app-empty-state title="لا توجد قرارات سابقة" message="ستظهر هنا الطلبات التي اعتمدتها أو رفضتها أو أعدتها." />
+    } @else {
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+          <caption class="visually-hidden">قراراتي السابقة</caption>
+          <thead>
+            <tr><th scope="col">الطلب</th><th scope="col">قراري</th><th scope="col">القيمة</th><th scope="col">الحالة الحالية</th><th scope="col">تاريخ القرار</th></tr>
+          </thead>
+          <tbody>
+            @for (r of decided(); track r.id) {
+              <tr>
+                <td style="max-inline-size: 20rem">
+                  <a class="fw-semibold text-decoration-none" [routerLink]="['/requests', r.id]">{{ r.titleAr }}</a>
+                  <div class="small text-muted-ar"><span class="ltr-inline">{{ r.refNo }}</span> · {{ serviceName(r) }}</div>
+                </td>
+                <td>
+                  @if (approval(r); as s) {
+                    <span class="badge" [class]="s.state === 'approved' ? 'bg-success-subtle text-success-emphasis' : 'bg-danger-subtle text-danger-emphasis'">{{ s.state === 'approved' ? 'اعتمدت' : 'رفضت' }}</span>
+                    @if (s.noteAr) { <div class="small text-muted-ar">{{ s.noteAr }}</div> }
+                  } @else {
+                    <span class="badge bg-warning-subtle text-warning-emphasis">أعدت للاستكمال / رفضت</span>
+                  }
+                </td>
+                <td>{{ r.estimatedValue > 0 ? (r.estimatedValue | money) : '—' }}</td>
+                <td><app-status-badge [status]="r.status" [holdReason]="r.holdReason" /></td>
+                <td class="small"><span class="ltr-inline">{{ (approval(r)?.at ?? r.updatedAt) | arDateTime }}</span></td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  }
+</section>

@@ -25,7 +25,29 @@
               }
             ],
             "styles": [
-              "src/styles.css"
+              "node_modules/bootstrap/dist/css/bootstrap.rtl.min.css",
+              "node_modules/bootstrap-icons/font/bootstrap-icons.css",
+              "@fontsource/cairo/arabic-600.css",
+              "@fontsource/cairo/arabic-700.css",
+              "@fontsource/cairo/arabic-800.css",
+              "@fontsource/cairo/latin-600.css",
+              "@fontsource/cairo/latin-700.css",
+              "@fontsource/cairo/latin-800.css",
+              "@fontsource/ibm-plex-sans-arabic/arabic-400.css",
+              "@fontsource/ibm-plex-sans-arabic/arabic-500.css",
+              "@fontsource/ibm-plex-sans-arabic/arabic-600.css",
+              "@fontsource/ibm-plex-sans-arabic/arabic-700.css",
+              "@fontsource/ibm-plex-sans-arabic/latin-400.css",
+              "@fontsource/ibm-plex-sans-arabic/latin-500.css",
+              "@fontsource/ibm-plex-sans-arabic/latin-600.css",
+              "@fontsource/ibm-plex-sans-arabic/latin-700.css",
+              "src/styles.scss"
+            ],
+            "polyfills": [
+              "@angular/localize/init"
+            ],
+            "allowedCommonJsDependencies": [
+              "chart.js"
             ]
           },
           "configurations": {
@@ -33,13 +55,13 @@
               "budgets": [
                 {
                   "type": "initial",
-                  "maximumWarning": "500kB",
-                  "maximumError": "1MB"
+                  "maximumWarning": "1.5MB",
+                  "maximumError": "3MB"
                 },
                 {
                   "type": "anyComponentStyle",
-                  "maximumWarning": "4kB",
-                  "maximumError": "8kB"
+                  "maximumWarning": "8kB",
+                  "maximumError": "16kB"
                 }
               ],
               "outputHashing": "all"

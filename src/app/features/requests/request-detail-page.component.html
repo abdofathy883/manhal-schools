@@ -1,0 +1,187 @@
+@if (loading()) {
+  <div class="card"><div class="card-body"><app-skeleton-rows [count]="6" /></div></div>
+} @else if (forbidden()) {
+  <div class="card">
+    <app-empty-state title="هذا الطلب خارج نطاق صلاحيتك" message="لا يمكنك الاطلاع على طلبات خارج فرعك أو قسمك أو دورك. لا يكفي معرفة الرقم المرجعي للاطلاع عليه.">
+      <a routerLink="/home" class="btn btn-primary">العودة للرئيسية</a>
+    </app-empty-state>
+  </div>
+} @else if (notFound()) {
+  <div class="card">
+    <app-empty-state title="الطلب غير موجود" message="تأكد من الرابط أو الرقم المرجعي.">
+      <a routerLink="/requests/mine" class="btn btn-primary">طلباتي</a>
+    </app-empty-state>
+  </div>
+} @else if (request(); as r) {
+  <header class="mb-4">
+    <a routerLink="/requests/mine" class="small text-decoration-none no-print"><i class="bi bi-arrow-right me-1" aria-hidden="true"></i>العودة إلى الطلبات</a>
+    <div class="d-flex flex-wrap align-items-start justify-content-between gap-3 mt-2">
+      <div>
+        <div class="d-flex flex-wrap align-items-center gap-2 mb-1">
+          <span class="fw-bold text-info-emphasis ltr-inline">{{ r.refNo }}</span>
+          <span class="badge bg-body-secondary text-body"><i class="bi me-1" [class]="service()!.icon" aria-hidden="true"></i>{{ service()!.nameAr }}</span>
+          @if (r.confidential) {
+            <span class="badge bg-danger-subtle text-danger-emphasis"><i class="bi bi-lock-fill me-1" aria-hidden="true"></i>سرّي</span>
+          }
+        </div>
+        <h1 class="h3 mb-2">{{ r.titleAr }}</h1>
+        <div class="d-flex flex-wrap align-items-center gap-2">
+          <app-status-badge [status]="r.status" [holdReason]="r.holdReason" />
+          <app-priority-badge [priority]="r.priority" />
+          @if (!terminal()) {
+            <app-sla-badge [request]="r" />
+          }
+        </div>
+      </div>
+      <div class="d-flex flex-wrap gap-2 no-print" role="toolbar" aria-label="إجراءات الطلب">
+        @for (a of primaryActions(); track a.key) {
+          <span [ngbTooltip]="a.enabled ? null : a.disabledReasonAr" placement="bottom" class="d-inline-block">
+            <button type="button" class="btn" [class]="'btn-' + (a.enabled ? a.tone : 'outline-secondary')" [disabled]="!a.enabled || busy()" [attr.aria-disabled]="!a.enabled" (click)="run(a)">
+              <i class="bi me-1" [class]="a.icon" aria-hidden="true"></i>{{ a.labelAr }}
+            </button>
+          </span>
+        }
+        @for (a of secondaryActions(); track a.key) {
+          <span [ngbTooltip]="a.enabled ? null : a.disabledReasonAr" placement="bottom" class="d-inline-block">
+            <button type="button" class="btn btn-outline-secondary" [disabled]="!a.enabled || busy()" (click)="run(a)">
+              <i class="bi me-1" [class]="a.icon" aria-hidden="true"></i>{{ a.labelAr }}
+            </button>
+          </span>
+        }
+        <button type="button" class="btn btn-light" (click)="print()" aria-label="طباعة الطلب"><i class="bi bi-printer" aria-hidden="true"></i></button>
+      </div>
+    </div>
+  </header>
+
+  @if (r.status === 'rejected') {
+    <div class="alert alert-danger" role="alert"><strong>تم رفض الطلب.</strong> السبب: {{ r.statusNoteAr }}</div>
+  } @else if (r.status === 'returned') {
+    <div class="alert alert-warning" role="alert"><strong>أُعيد الطلب للاستكمال.</strong> المطلوب: {{ r.statusNoteAr }}</div>
+  } @else if (r.status === 'on_hold') {
+    <div class="alert alert-warning" role="status">
+      <strong>الطلب معلّق مؤقتًا.</strong>
+      @if (r.statusNoteAr) { {{ r.statusNoteAr }} }
+    </div>
+  } @else if (r.status === 'pending_approval' && r.details['waitlisted'] === true) {
+    <div class="alert alert-warning" role="status"><strong>الحجز في قائمة الانتظار.</strong> لا تتوفر باصات كافية لهذه الفترة؛ يرقّيه مسؤول النقل إلى حجز معتمد عند توفر باص، وسيصلك إشعار بذلك.</div>
+  } @else if (r.status === 'cancelled') {
+    <div class="alert alert-secondary" role="status">أُلغي هذا الطلب.</div>
+  } @else if (r.status === 'pending_confirmation' && isRequester()) {
+    <div class="alert alert-info" role="status"><strong>بانتظار تأكيدك.</strong> تم تنفيذ الطلب، يرجى تأكيد النتيجة أو رفضها مع ذكر السبب.</div>
+  }
+
+  @if (!terminal()) {
+    <div class="card mb-4"><div class="card-body overflow-auto"><app-status-stepper [status]="r.status" /></div></div>
+  }
+
+  <div class="row g-4">
+    <div class="col-lg-8">
+      <section class="card mb-4">
+        <div class="card-header">تفاصيل الطلب</div>
+        <div class="card-body"><app-request-details-view [request]="r" /></div>
+      </section>
+
+      @if (showExecutorStages()) {
+        <app-executor-stages [request]="r" />
+      }
+
+      @if (r.service === 'purchase-request') {
+        <app-procurement-panel [request]="r" />
+      }
+
+      @if (r.approvals.length) {
+        <section class="card mb-4">
+          <div class="card-header">مسار الاعتماد</div>
+          <ol class="list-group list-group-flush list-group-numbered">
+            @for (s of r.approvals; track s.id) {
+              <li class="list-group-item d-flex align-items-start gap-3">
+                <i class="bi mt-1" [class]="stepIcons[s.state]" aria-hidden="true"></i>
+                <div class="flex-grow-1">
+                  <div class="fw-semibold">{{ s.labelAr }}</div>
+                  <div class="small text-muted-ar">
+                    {{ stepLabels[s.state] }}
+                    @if (s.at) { · <span class="ltr-inline">{{ s.at | arDateTime }}</span> }
+                  </div>
+                  @if (s.noteAr) { <div class="small mt-1 bg-body-tertiary rounded-2 p-2">{{ s.noteAr }}</div> }
+                </div>
+              </li>
+            }
+          </ol>
+        </section>
+      }
+
+      @if (r.costs.length) {
+        <section class="card mb-4">
+          <div class="card-header">التكلفة</div>
+          <div class="table-responsive">
+            <table class="table table-sm align-middle mb-0">
+              <thead><tr><th scope="col">النوع</th><th scope="col">الوصف</th><th scope="col">الكمية</th><th scope="col">سعر الوحدة</th><th scope="col">الإجمالي</th></tr></thead>
+              <tbody>
+                @for (c of r.costs; track c.id) {
+                  <tr>
+                    <td>{{ costKinds[c.kind] }}</td>
+                    <td>{{ c.descriptionAr }}</td>
+                    <td><span class="ltr-inline">{{ c.quantity }}</span></td>
+                    <td>{{ c.unitCost | money }}</td>
+                    <td>{{ c.quantity * c.unitCost | money }}</td>
+                  </tr>
+                }
+              </tbody>
+              <tfoot><tr class="fw-bold"><td colspan="4">إجمالي التكلفة</td><td>{{ totalCost() | money }}</td></tr></tfoot>
+            </table>
+          </div>
+        </section>
+      }
+
+      <app-comments-panel [request]="r" (changed)="refresh()" />
+    </div>
+
+    <div class="col-lg-4">
+      <section class="card mb-4">
+        <div class="card-header">الملخص</div>
+        <dl class="list-group list-group-flush mb-0">
+          <div class="list-group-item d-flex justify-content-between gap-2"><dt class="fw-normal text-muted-ar">مقدم الطلب</dt><dd class="mb-0 fw-semibold text-end">{{ r.requesterName }}</dd></div>
+          <div class="list-group-item d-flex justify-content-between gap-2"><dt class="fw-normal text-muted-ar">الجوال</dt><dd class="mb-0 fw-semibold"><span class="ltr-inline">{{ r.requesterMobile }}</span></dd></div>
+          <div class="list-group-item d-flex justify-content-between gap-2"><dt class="fw-normal text-muted-ar">الفرع</dt><dd class="mb-0 fw-semibold">{{ branchName() }}</dd></div>
+          <div class="list-group-item d-flex justify-content-between gap-2"><dt class="fw-normal text-muted-ar">القسم</dt><dd class="mb-0 fw-semibold text-end">{{ departmentName() }}</dd></div>
+          <div class="list-group-item d-flex justify-content-between gap-2"><dt class="fw-normal text-muted-ar">المنفّذ</dt><dd class="mb-0 fw-semibold">{{ r.assigneeName ?? 'لم يُسند بعد' }}</dd></div>
+          <div class="list-group-item d-flex justify-content-between gap-2"><dt class="fw-normal text-muted-ar">تاريخ التقديم</dt><dd class="mb-0 fw-semibold"><span class="ltr-inline">{{ r.createdAt | arDateTime }}</span></dd></div>
+          <div class="list-group-item d-flex justify-content-between gap-2"><dt class="fw-normal text-muted-ar">آخر تحديث</dt><dd class="mb-0 fw-semibold"><span class="ltr-inline">{{ r.updatedAt | arDateTime }}</span></dd></div>
+          <div class="list-group-item d-flex justify-content-between gap-2"><dt class="fw-normal text-muted-ar">مدة الاستجابة المستهدفة</dt><dd class="mb-0 fw-semibold">{{ r.sla.targetHours }} ساعة</dd></div>
+          @if (totalCost() > 0) {
+            <div class="list-group-item d-flex justify-content-between gap-2"><dt class="fw-normal text-muted-ar">إجمالي التكلفة</dt><dd class="mb-0 fw-semibold">{{ totalCost() | money }}</dd></div>
+          }
+          @if (r.rating) {
+            <div class="list-group-item d-flex justify-content-between align-items-center gap-2"><dt class="fw-normal text-muted-ar">تقييم الخدمة</dt><dd class="mb-0"><app-star-rating [value]="r.rating.stars" [readonly]="true" /></dd></div>
+          }
+        </dl>
+      </section>
+
+      <app-cost-rollup [request]="r" />
+
+      @if (r.links.length) {
+        <div class="mb-4"><app-linked-requests-panel [links]="r.links" /></div>
+      }
+
+      <section class="card mb-4">
+        <div class="card-header">المرفقات ({{ r.attachments.length }})</div>
+        <div class="card-body">
+          @if (r.attachments.length) {
+            <div class="d-flex flex-wrap gap-2">
+              @for (f of r.attachments; track f.id) {
+                <app-file-chip [file]="f" />
+              }
+            </div>
+          } @else {
+            <span class="text-muted-ar">لا توجد مرفقات.</span>
+          }
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="card-header">الخط الزمني</div>
+        <div class="card-body"><app-timeline [events]="r.timeline" /></div>
+      </section>
+    </div>
+  </div>
+}

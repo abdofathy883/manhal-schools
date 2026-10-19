@@ -1,0 +1,74 @@
+:host {
+  display: block;
+}
+
+.mnh-demobar {
+  position: sticky;
+  inset-block-start: 0;
+  z-index: 1040;
+  block-size: var(--mnh-demobar-height);
+  background: #0f2f4a;
+  color: #fff;
+  overflow-x: auto;
+  scrollbar-width: none;
+  white-space: nowrap;
+}
+
+.demo-badge {
+  background: var(--mnh-accent);
+  color: #2a1a00;
+  font-weight: 700;
+}
+
+.demo-btn {
+  color: #fff;
+  background: rgb(255 255 255 / 10%);
+  border: 0;
+  white-space: nowrap;
+
+  &:hover:not(:disabled),
+  &:focus-visible {
+    background: rgb(255 255 255 / 20%);
+    color: #fff;
+  }
+
+  &:disabled {
+    color: rgb(255 255 255 / 55%);
+  }
+}
+
+.avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  inline-size: 1.6rem;
+  block-size: 1.6rem;
+  border-radius: 50%;
+  color: #fff;
+  font-weight: 700;
+  font-size: 0.8rem;
+  border: 1px solid rgb(255 255 255 / 60%);
+}
+
+.switcher-name {
+  max-inline-size: 6rem;
+}
+
+@media (min-width: 768px) {
+  .switcher-name {
+    max-inline-size: 11rem;
+  }
+}
+
+.demobar-restore {
+  position: fixed;
+  inset-block-start: 0.4rem;
+  inset-inline-end: 0.75rem;
+  z-index: 1060;
+}
+
+.switcher-menu {
+  min-inline-size: 22rem;
+  max-block-size: 70vh;
+  overflow-y: auto;
+}

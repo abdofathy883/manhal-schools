@@ -1,0 +1,242 @@
+<section class="card mb-4 border-info" aria-labelledby="exec-title">
+  <div class="card-header d-flex align-items-center justify-content-between">
+    <span id="exec-title"><i class="bi bi-lock me-2" aria-hidden="true"></i>بيانات التنفيذ (للمنفّذين فقط)</span>
+    @if (!canEdit()) {
+      <span class="badge bg-secondary-subtle text-secondary-emphasis">للاطلاع فقط</span>
+    }
+  </div>
+
+  <form class="card-body" [formGroup]="form" (submit)="$event.preventDefault(); saveExecution()" novalidate>
+    <fieldset [disabled]="!canEdit()" class="m-0 p-0 border-0">
+      <h3 class="h6 text-info-emphasis">تصنيف الطلب</h3>
+      <div class="row g-3 mb-4">
+        <div class="col-md-3">
+          <label class="form-label" for="ex-cat">تصنيف الطلب</label>
+          <select id="ex-cat" class="form-select" formControlName="category">
+            <option value="">—</option>
+            @for (c of categories; track c) {
+              <option [value]="c">{{ c }}</option>
+            }
+          </select>
+        </div>
+        <div class="col-md-3">
+          <label class="form-label" for="ex-spec">التخصص</label>
+          <select id="ex-spec" class="form-select" formControlName="specialtyId">
+            <option value="">—</option>
+            @for (s of lists.value()?.maintenanceSpecialties ?? []; track s.id) {
+              <option [value]="s.id">{{ s.nameAr }}</option>
+            }
+          </select>
+        </div>
+        <div class="col-md-3">
+          <label class="form-label" for="ex-target">موعد الاستجابة المستهدف</label>
+          <input id="ex-target" type="datetime-local" class="form-control ltr text-start" formControlName="targetResponse" />
+        </div>
+        <div class="col-md-3">
+          <label class="form-label" for="ex-method">طريقة التنفيذ</label>
+          <select id="ex-method" class="form-select" formControlName="method">
+            <option value="">—</option>
+            @for (m of methods; track m.key) {
+              <option [value]="m.key">{{ m.label }}</option>
+            }
+          </select>
+        </div>
+        <div class="col-12 small text-muted-ar">الفني المسؤول: <strong>{{ request().assigneeName ?? 'لم يُسند بعد' }}</strong> (يُحدَّد من زر «إسناد»)</div>
+      </div>
+
+      <h3 class="h6 text-info-emphasis">الفحص والتشخيص</h3>
+      <div class="row g-3 mb-4">
+        <div class="col-md-4">
+          <label class="form-label" for="ex-ires">نتيجة الفحص</label>
+          <textarea id="ex-ires" class="form-control" rows="3" formControlName="inspResult" [class.is-invalid]="submitted() && form.value.inspResult === '' && (form.value.inspCause || form.value.inspPlan)"></textarea>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label" for="ex-icause">السبب الجذري</label>
+          <textarea id="ex-icause" class="form-control" rows="3" formControlName="inspCause"></textarea>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label" for="ex-iplan">خطة الإصلاح</label>
+          <textarea id="ex-iplan" class="form-control" rows="3" formControlName="inspPlan"></textarea>
+        </div>
+        <div class="col-12">
+          <div class="form-check form-switch">
+            <input class="form-check-input" type="checkbox" role="switch" id="ex-parts-need" formControlName="needsParts" />
+            <label class="form-check-label" for="ex-parts-need">يتطلب الإصلاح قطع غيار</label>
+          </div>
+        </div>
+      </div>
+
+      <h3 class="h6 text-info-emphasis">جدول قطع الغيار</h3>
+      <div class="table-responsive mb-2">
+        <table class="table table-sm align-middle mb-1">
+          <caption class="visually-hidden">قطع الغيار</caption>
+          <thead>
+            <tr>
+              <th scope="col" style="min-inline-size: 11rem">من المستودع</th>
+              <th scope="col" style="min-inline-size: 12rem">الوصف</th>
+              <th scope="col" style="inline-size: 9rem">رقم القطعة</th>
+              <th scope="col" style="inline-size: 6rem">الكمية</th>
+              <th scope="col" style="inline-size: 9rem">المصدر</th>
+              <th scope="col" style="inline-size: 8rem">التكلفة (للوحدة)</th>
+              <th scope="col" style="inline-size: 3rem"><span class="visually-hidden">حذف</span></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (row of parts.controls; track row; let i = $index) {
+              <tr [formGroup]="row">
+                <td>
+                  <select class="form-select form-select-sm" [attr.aria-label]="'صنف المستودع ' + (i + 1)" [value]="row.controls.itemId.value" (change)="pickItem(i, $any($event.target).value)">
+                    <option value="">— غير مرتبطة بالمستودع —</option>
+                    @for (it of stock.value() ?? []; track it.id) {
+                      <option [value]="it.id">{{ it.nameAr }} ({{ it.code }})</option>
+                    }
+                  </select>
+                  @if (stockOf(row.controls.itemId.value); as s) {
+                    <span class="badge mt-1" [class]="s.level === 'out' ? 'bg-danger-subtle text-danger-emphasis' : s.level === 'low' ? 'bg-warning-subtle text-warning-emphasis' : 'bg-success-subtle text-success-emphasis'">
+                      {{ s.level === 'out' ? 'نفد من المستودع' : 'الرصيد ' + s.stock + ' ' + s.unitAr }}
+                    </span>
+                  }
+                </td>
+                <td><input class="form-control form-control-sm" formControlName="description" [attr.aria-label]="'وصف القطعة ' + (i + 1)" [class.is-invalid]="badPart(row.controls.description)" /></td>
+                <td><input class="form-control form-control-sm ltr text-start" formControlName="partNo" [attr.aria-label]="'رقم القطعة ' + (i + 1)" /></td>
+                <td><input type="number" min="1" class="form-control form-control-sm ltr text-start" formControlName="qty" [attr.aria-label]="'الكمية ' + (i + 1)" [class.is-invalid]="badPart(row.controls.qty)" /></td>
+                <td>
+                  <select class="form-select form-select-sm" formControlName="source" [attr.aria-label]="'المصدر ' + (i + 1)">
+                    @for (s of sources; track s.key) {
+                      <option [value]="s.key">{{ s.label }}</option>
+                    }
+                  </select>
+                </td>
+                <td><input type="number" min="0" class="form-control form-control-sm ltr text-start" formControlName="cost" [attr.aria-label]="'التكلفة ' + (i + 1)" [class.is-invalid]="badPart(row.controls.cost)" /></td>
+                <td><button type="button" class="btn btn-sm btn-link text-danger p-0" (click)="removePart(i)" [attr.aria-label]="'حذف القطعة ' + (i + 1)"><i class="bi bi-trash" aria-hidden="true"></i></button></td>
+              </tr>
+            } @empty {
+              <tr><td colspan="7" class="text-muted-ar text-center">لا توجد قطع غيار مسجلة.</td></tr>
+            }
+          </tbody>
+        </table>
+      </div>
+      <div class="d-flex flex-wrap gap-2 mb-3">
+        <button type="button" class="btn btn-outline-primary btn-sm" (click)="addPart()"><i class="bi bi-plus-lg me-1" aria-hidden="true"></i>إضافة قطعة</button>
+        @if (canCheckStock() && !form.dirty) {
+          <button type="button" class="btn btn-primary btn-sm" [disabled]="saving()" (click)="checkStock()"><i class="bi bi-box-seam me-1" aria-hidden="true"></i>فحص المستودع وصرف القطع ({{ pendingParts() }})</button>
+        } @else if (pendingParts() > 0 && canEdit()) {
+          <span class="small text-muted-ar align-self-center">احفظ بيانات التنفيذ وابدأ التنفيذ ثم افحص المستودع.</span>
+        }
+      </div>
+      @if (fulfilment(); as f) {
+        <div class="alert alert-info small mb-4" role="status">
+          <i class="bi bi-diagram-3 me-1" aria-hidden="true"></i>
+          @if (f.issued.length) {
+            <div>صُرف من المستودع: @for (l of f.issued; track l.itemId) { <strong>{{ l.nameAr }} × {{ l.qty }}</strong>{{ $last ? '' : '، ' }} }</div>
+          }
+          @if (f.awaiting.length) {
+            <div>بانتظار التوريد: @for (l of f.awaiting; track l.itemId) { <strong>{{ l.nameAr }} × {{ l.qty }}</strong>{{ $last ? '' : '، ' }} }
+              @if (f.purchaseRef) { — طلب الشراء المرتبط <span class="ltr-inline fw-semibold">{{ f.purchaseRef }}</span> }
+            </div>
+          }
+        </div>
+      }
+
+      <h3 class="h6 text-info-emphasis">الأعمال المنفذة والاختبار</h3>
+      <div class="row g-3 mb-3">
+        <div class="col-md-6">
+          <label class="form-label" for="ex-work">الأعمال المنفذة</label>
+          <textarea id="ex-work" class="form-control" rows="3" formControlName="workDone"></textarea>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label" for="ex-test">نتيجة الاختبار</label>
+          <textarea id="ex-test" class="form-control" rows="3" formControlName="testResult"></textarea>
+        </div>
+        <div class="col-md-3">
+          <label class="form-label" for="ex-start">بداية العمل</label>
+          <input id="ex-start" type="datetime-local" class="form-control ltr text-start" formControlName="startAt" />
+        </div>
+        <div class="col-md-3">
+          <label class="form-label" for="ex-end">نهاية العمل</label>
+          <input id="ex-end" type="datetime-local" class="form-control ltr text-start" formControlName="endAt" />
+        </div>
+        <div class="col-md-3">
+          <label class="form-label" for="ex-down">مدة التوقف (ساعات)</label>
+          <input id="ex-down" type="number" min="0" class="form-control ltr text-start" formControlName="downtimeHours" />
+        </div>
+        <div class="col-md-3">
+          <label class="form-label" for="ex-labour">ساعات العمل</label>
+          <input id="ex-labour" type="number" min="0" class="form-control ltr text-start" formControlName="labourHours" />
+        </div>
+      </div>
+
+      <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 bg-body-tertiary rounded-3 p-3">
+        <div class="small">
+          قطع الغيار: <strong>{{ partsTotal() | money }}</strong> · العمالة ({{ labourRate }} ر.س/ساعة): <strong>{{ labourTotal() | money }}</strong> ·
+          التكلفة الإجمالية: <strong class="text-info-emphasis">{{ partsTotal() + labourTotal() | money }}</strong>
+        </div>
+        @if (canEdit()) {
+          <button type="submit" class="btn btn-primary" [disabled]="saving()"><i class="bi bi-save me-1" aria-hidden="true"></i>حفظ بيانات التنفيذ</button>
+        }
+      </div>
+    </fieldset>
+  </form>
+</section>
+
+@if (isClosingStage()) {
+  <section class="card mb-4 border-info" aria-labelledby="close-title">
+    <div class="card-header" id="close-title"><i class="bi bi-flag me-2" aria-hidden="true"></i>مرحلة الإغلاق</div>
+    <div class="card-body">
+      <div class="row g-3">
+        <div class="col-md-6">
+          <div class="small text-muted-ar">نتيجة مقدم الطلب</div>
+          @if (request().confirmation; as c) {
+            <div class="fw-semibold">{{ outcomeLabels[c.outcome] }}</div>
+            @if (c.noteAr) {
+              <div class="small bg-body-tertiary rounded-2 p-2 mt-1">{{ c.noteAr }}</div>
+            }
+          } @else {
+            <div class="text-muted-ar">بانتظار تأكيد مقدم الطلب.</div>
+          }
+        </div>
+        <div class="col-md-6">
+          <div class="small text-muted-ar">قرار مسؤول الصيانة وحالة الأصل</div>
+          @if (closure(); as c) {
+            <div class="fw-semibold">{{ decisionLabels[c.decision] }} — الأصل: {{ conditionLabels[c.assetCondition] }}</div>
+            @if (c.followUpDate) {
+              <div class="small text-muted-ar">موعد المتابعة: <span class="ltr-inline">{{ c.followUpDate | arDate }}</span></div>
+            }
+          } @else if (!canClose()) {
+            <div class="text-muted-ar">لم يُسجَّل القرار بعد.</div>
+          }
+        </div>
+      </div>
+
+      @if (canClose()) {
+        <form class="row g-3 mt-1" [formGroup]="closeForm" (submit)="$event.preventDefault(); saveClosure()" novalidate>
+          <div class="col-md-4">
+            <label class="form-label" for="cl-dec">قرار مسؤول الصيانة <span class="text-danger" aria-hidden="true">*</span></label>
+            <select id="cl-dec" class="form-select" formControlName="decision" [class.is-invalid]="closeForm.controls.decision.invalid && closeForm.controls.decision.touched">
+              <option value="">اختر</option>
+              @for (d of decisions; track d.key) {
+                <option [value]="d.key">{{ d.label }}</option>
+              }
+            </select>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label" for="cl-cond">حالة الأصل بعد الإغلاق <span class="text-danger" aria-hidden="true">*</span></label>
+            <select id="cl-cond" class="form-select" formControlName="assetCondition" [class.is-invalid]="closeForm.controls.assetCondition.invalid && closeForm.controls.assetCondition.touched">
+              <option value="">اختر</option>
+              @for (c of conditions; track c.key) {
+                <option [value]="c.key">{{ c.label }}</option>
+              }
+            </select>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label" for="cl-follow">موعد المتابعة</label>
+            <input id="cl-follow" type="date" class="form-control ltr text-start" formControlName="followUpDate" />
+          </div>
+          <div class="col-12">
+            <button type="submit" class="btn btn-primary" [disabled]="saving()"><i class="bi bi-flag me-1" aria-hidden="true"></i>تسجيل القرار</button>
+          </div>
+        </form>
+      }
+    </div>
+  </section>
+}

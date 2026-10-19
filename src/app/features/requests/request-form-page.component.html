@@ -1,0 +1,146 @@
+<app-page-header [title]="definition().nameAr" [subtitle]="definition().descriptionAr">
+  <a class="btn btn-outline-secondary" routerLink="/requests/new"><i class="bi bi-arrow-right me-1" aria-hidden="true"></i>رجوع للكتالوج</a>
+</app-page-header>
+
+@if (!allowed()) {
+  <div class="alert alert-warning" role="alert">ليست لديك صلاحية تقديم هذا النوع من الطلبات.</div>
+} @else if (user(); as u) {
+  <form [formGroup]="form" (submit)="$event.preventDefault(); submit()" novalidate>
+    <div class="row g-4">
+      <div class="col-lg-8">
+        <section class="card mb-4">
+          <div class="card-header">بيانات الطلب</div>
+          <div class="card-body">
+            <div class="row g-3">
+              <div class="col-12">
+                <label class="form-label" for="f-title">عنوان الطلب <span class="text-danger" aria-hidden="true">*</span></label>
+                <input id="f-title" class="form-control" formControlName="titleAr" maxlength="120" [class.is-invalid]="invalid('titleAr')" />
+                <div class="invalid-feedback">عنوان الطلب مطلوب (حتى 120 حرفًا).</div>
+              </div>
+
+              <div class="col-12">
+                <label class="form-label" for="f-desc">التفاصيل <span class="text-danger" aria-hidden="true">*</span></label>
+                <textarea id="f-desc" class="form-control" rows="5" formControlName="descriptionAr" [class.is-invalid]="invalid('descriptionAr')"></textarea>
+                <div class="invalid-feedback">اكتب تفاصيل كافية للطلب (10 أحرف على الأقل).</div>
+              </div>
+
+              @if (hasScheduling()) {
+              <div class="col-md-6">
+                <label class="form-label" for="f-priority">الأولوية</label>
+                <select id="f-priority" class="form-select" formControlName="priority">
+                  @for (p of priorities(); track p) {
+                    <option [value]="p">{{ priorityLabels[p] }}</option>
+                  }
+                </select>
+              </div>
+
+              <div class="col-md-6">
+                <label class="form-label" for="f-needed">التاريخ المطلوب</label>
+                <div class="input-group">
+                  <input id="f-needed" class="form-control ltr text-start" placeholder="dd/MM/yyyy" ngbDatepicker #d="ngbDatepicker" formControlName="neededBy" [firstDayOfWeek]="7" />
+                  <button class="btn btn-outline-secondary" type="button" (click)="d.toggle()" aria-label="فتح التقويم"><i class="bi bi-calendar3" aria-hidden="true"></i></button>
+                </div>
+              </div>
+              }
+
+              @if (needsValue()) {
+                <div class="col-md-6">
+                  <label class="form-label" for="f-value">القيمة التقديرية (ر.س) <span class="text-danger" aria-hidden="true">*</span></label>
+                  <input id="f-value" type="number" min="1" class="form-control ltr text-start" formControlName="estimatedValue" [class.is-invalid]="invalid('estimatedValue')" />
+                  <div class="invalid-feedback">أدخل القيمة التقديرية.</div>
+                  <div class="form-text">تحدد القيمة مسار الاعتماد: مدير القسم، ثم الإدارة المالية والإدارة العليا حسب الحدود.</div>
+                </div>
+              }
+            </div>
+          </div>
+        </section>
+
+        @switch (service()) {
+          @case ('building-maintenance') {
+            <app-building-maintenance-section [group]="details" [submitted]="submitted()" />
+          }
+          @case ('works-execution') {
+            <app-works-execution-section [group]="details" [submitted]="submitted()" />
+          }
+          @case ('purchase-request') {
+            <app-purchase-request-section [group]="details" [submitted]="submitted()" />
+          }
+          @case ('warehouse-need') {
+            <app-warehouse-need-section [group]="details" [submitted]="submitted()" />
+          }
+          @case ('complaint') {
+            <app-complaint-section [group]="details" [submitted]="submitted()" />
+          }
+          @case ('vehicle-maintenance') {
+            <app-vehicle-maintenance-section [group]="details" [submitted]="submitted()" />
+          }
+          @case ('traffic-violation') {
+            <app-traffic-violation-section [group]="details" [submitted]="submitted()" />
+          }
+          @case ('traffic-accident') {
+            <app-traffic-accident-section [group]="details" [submitted]="submitted()" [hasReport]="attachments().length > 0" />
+          }
+          @case ('internal-event') {
+            <app-internal-event-section [group]="details" [submitted]="submitted()" />
+          }
+          @case ('bus-booking') {
+            <app-bus-booking-section [group]="details" [submitted]="submitted()" [branchId]="effectiveBranchId()" />
+          }
+        }
+
+        <section class="card mb-4">
+          <div class="card-header">المرفقات</div>
+          <div class="card-body"><app-attachment-uploader [(files)]="attachments" /></div>
+        </section>
+      </div>
+
+      <div class="col-lg-4">
+        <section class="card mb-4">
+          <div class="card-header">مقدم الطلب</div>
+          <div class="card-body">
+            <div class="mb-3">
+              <div class="form-label">الاسم</div>
+              <div>{{ u.nameAr }}</div>
+            </div>
+            <div class="mb-3">
+              <label class="form-label" for="f-mobile">رقم الجوال</label>
+              <input id="f-mobile" class="form-control ltr text-start" formControlName="mobile" inputmode="numeric" maxlength="10" [class.is-invalid]="invalid('mobile')" />
+              <div class="invalid-feedback">أدخل رقم جوال سعودي صحيحًا يبدأ بـ 05 (10 أرقام).</div>
+            </div>
+            @if (pickPlace()) {
+              <div class="mb-3">
+                <label class="form-label" for="f-branch">الفرع</label>
+                <select id="f-branch" class="form-select" formControlName="branchId" [class.is-invalid]="invalid('branchId')">
+                  <option [ngValue]="null">اختر الفرع</option>
+                  @for (b of branches; track b.id) {
+                    <option [value]="b.id">{{ b.nameAr }}</option>
+                  }
+                </select>
+                <div class="invalid-feedback">اختر الفرع.</div>
+              </div>
+              <div class="mb-0">
+                <label class="form-label" for="f-dept">القسم</label>
+                <select id="f-dept" class="form-select" formControlName="departmentId" [class.is-invalid]="invalid('departmentId')">
+                  <option [ngValue]="null">اختر القسم</option>
+                  @for (dep of departments; track dep.id) {
+                    <option [value]="dep.id">{{ dep.nameAr }}</option>
+                  }
+                </select>
+                <div class="invalid-feedback">اختر القسم.</div>
+              </div>
+            } @else {
+              <div class="small text-muted-ar">الفرع والقسم يُحدَّدان تلقائيًا من حسابك.</div>
+            }
+          </div>
+        </section>
+
+        <button type="submit" class="btn btn-primary btn-lg w-100" [disabled]="submitting()">
+          @if (submitting()) {
+            <span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>
+          }
+          <i class="bi bi-send me-2" aria-hidden="true"></i>تقديم الطلب
+        </button>
+      </div>
+    </div>
+  </form>
+}

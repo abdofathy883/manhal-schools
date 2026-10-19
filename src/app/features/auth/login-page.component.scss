@@ -1,0 +1,49 @@
+.login-bg {
+  position: relative;
+  min-block-size: calc(100dvh - var(--mnh-demobar-offset, 0px));
+  overflow: hidden;
+  background: linear-gradient(160deg, #1f5a8a 0%, #2b86ad 55%, #35a2b9 100%);
+}
+
+.circle {
+  position: absolute;
+  border-radius: 50%;
+  background: rgb(255 255 255 / 10%);
+
+  &.circle-a {
+    inline-size: 32rem;
+    block-size: 32rem;
+    inset-block-start: -12rem;
+    inset-inline-start: -10rem;
+  }
+
+  &.circle-b {
+    inline-size: 14rem;
+    block-size: 14rem;
+    inset-block-end: 4rem;
+    inset-inline-end: 8%;
+    background: transparent;
+    border: 2px solid rgb(255 255 255 / 30%);
+  }
+
+  &.circle-c {
+    inline-size: 22rem;
+    block-size: 22rem;
+    inset-block-end: -9rem;
+    inset-inline-start: 12%;
+    background: rgb(255 255 255 / 12%);
+  }
+}
+
+.login-card {
+  inline-size: min(28rem, 100%);
+  border-radius: 20px;
+  box-shadow: var(--mnh-shadow-lg);
+}
+
+.demo-hint {
+  background: var(--mnh-surface);
+  border-inline-start: 3px solid var(--mnh-teal);
+  border-radius: var(--mnh-radius-sm);
+  padding: 0.65rem 0.9rem;
+}

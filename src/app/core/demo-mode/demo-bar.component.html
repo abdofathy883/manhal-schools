@@ -1,0 +1,93 @@
+@if (demo.hidden()) {
+  <button
+    type="button"
+    class="demobar-restore no-print btn btn-sm btn-dark rounded-pill shadow"
+    (click)="demo.toggleBar()"
+    aria-label="إظهار شريط وضع العرض"
+    ngbTooltip="إظهار شريط وضع العرض"
+    placement="bottom"
+  >
+    <i class="bi bi-eye" aria-hidden="true"></i>
+  </button>
+} @else {
+  <div class="mnh-demobar no-print d-flex align-items-center gap-2 px-3" role="region" aria-label="شريط وضع العرض التجريبي">
+    <span class="badge demo-badge d-inline-flex align-items-center gap-1">
+      <i class="bi bi-play-circle-fill" aria-hidden="true"></i><span class="d-none d-sm-inline">وضع العرض التجريبي</span><span class="d-sm-none">تجريبي</span>
+    </span>
+
+    <div ngbDropdown container="body" placement="bottom-start" class="d-inline-block">
+      <button type="button" class="btn btn-sm demo-btn d-flex align-items-center gap-2" ngbDropdownToggle id="demo-user-switcher">
+        @if (auth.currentUser(); as u) {
+          <span class="avatar" [style.background]="u.avatarColor" aria-hidden="true">{{ u.nameAr.charAt(0) }}</span>
+          <span class="text-truncate switcher-name">{{ u.nameAr }}</span>
+        } @else {
+          <i class="bi bi-person-circle" aria-hidden="true"></i>
+          <span>اختر مستخدمًا</span>
+        }
+      </button>
+      <div ngbDropdownMenu aria-labelledby="demo-user-switcher" class="switcher-menu py-2">
+        @for (g of demo.groups(); track g.role.id) {
+          <h6 class="dropdown-header">{{ g.role.nameAr }}</h6>
+          @for (u of g.users; track u.id) {
+            <button
+              ngbDropdownItem
+              type="button"
+              class="d-flex align-items-center gap-2 py-2"
+              [class.active]="auth.currentUser()?.id === u.id"
+              (click)="demo.switchTo(u)"
+            >
+              <span class="avatar flex-shrink-0" [style.background]="u.avatarColor" aria-hidden="true">{{ u.nameAr.charAt(0) }}</span>
+              <span class="text-start">
+                <span class="d-block fw-semibold lh-sm">{{ u.nameAr }}</span>
+                <span class="d-block small opacity-75 lh-sm">{{ g.role.nameAr }} · {{ placeOf(u) }}</span>
+              </span>
+              <span class="ms-auto small opacity-75 ltr-inline">{{ u.employeeId }}</span>
+            </button>
+          }
+        }
+      </div>
+    </div>
+
+    <div class="d-flex align-items-center gap-1 ms-auto">
+      @if (auth.currentUser(); as u) {
+        <ng-template #abilities let-offcanvas>
+          <div class="offcanvas-header">
+            <h2 class="offcanvas-title h5" id="abilities-title">ماذا يستطيع هذا المستخدم؟</h2>
+            <button type="button" class="btn-close" aria-label="إغلاق" (click)="offcanvas.dismiss()"></button>
+          </div>
+          <div class="offcanvas-body">
+            <app-effective-permissions-panel [user]="u" />
+          </div>
+        </ng-template>
+        <button type="button" class="btn btn-sm demo-btn" (click)="openAbilities(abilities)">
+          <i class="bi bi-question-circle me-1" aria-hidden="true"></i><span class="d-none d-md-inline">ماذا يستطيع هذا المستخدم؟</span>
+        </button>
+      }
+
+      <span ngbTooltip="يتوفر السيناريو الموجّه في مرحلة لاحقة" placement="bottom" class="d-inline-block">
+        <button type="button" class="btn btn-sm demo-btn" disabled>
+          <i class="bi bi-signpost-2 me-1" aria-hidden="true"></i><span class="d-none d-lg-inline">بدء السيناريو الموجّه</span>
+        </button>
+      </span>
+
+      <ng-template #resetModal let-modal>
+        <div class="modal-header">
+          <h2 class="modal-title h6">إعادة ضبط بيانات العرض</h2>
+          <button type="button" class="btn-close" aria-label="إغلاق" (click)="modal.dismiss()"></button>
+        </div>
+        <div class="modal-body small">سيتم حذف كل التغييرات التي أجريتها واستعادة البيانات الأصلية للعرض. هل تريد المتابعة؟</div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-danger btn-sm" (click)="modal.close()">إعادة الضبط</button>
+          <button type="button" class="btn btn-outline-secondary btn-sm" (click)="modal.dismiss()">إلغاء</button>
+        </div>
+      </ng-template>
+      <button type="button" class="btn btn-sm demo-btn" (click)="confirmReset(resetModal)">
+        <i class="bi bi-arrow-counterclockwise me-1" aria-hidden="true"></i><span class="d-none d-lg-inline">إعادة ضبط بيانات العرض</span>
+      </button>
+
+      <button type="button" class="btn btn-sm demo-btn" (click)="demo.toggleBar()" aria-label="إخفاء شريط وضع العرض" ngbTooltip="إخفاء الشريط" placement="bottom">
+        <i class="bi bi-eye-slash" aria-hidden="true"></i>
+      </button>
+    </div>
+  </div>
+}

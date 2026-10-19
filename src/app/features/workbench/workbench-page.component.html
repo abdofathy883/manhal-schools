@@ -1,0 +1,132 @@
+<app-page-header
+  title="شاشة المنفّذ"
+  [subtitle]="isTechnicianView() ? 'الأعمال المسندة إليك فقط.' : 'الطلبات الجديدة والجارية والمعلّقة ضمن اختصاصك، مع مؤقتات مدة الاستجابة.'"
+>
+  <div class="btn-group" role="group" aria-label="طريقة العرض">
+    <button type="button" class="btn" [class]="view() === 'kanban' ? 'btn-primary' : 'btn-outline-primary'" (click)="view.set('kanban')"><i class="bi bi-kanban me-1" aria-hidden="true"></i>لوحة</button>
+    <button type="button" class="btn" [class]="view() === 'list' ? 'btn-primary' : 'btn-outline-primary'" (click)="view.set('list')"><i class="bi bi-list-ul me-1" aria-hidden="true"></i>قائمة</button>
+  </div>
+</app-page-header>
+
+@if (overdueCount() > 0) {
+  <div class="alert alert-danger d-flex align-items-center gap-2" role="status">
+    <i class="bi bi-alarm-fill" aria-hidden="true"></i>
+    <span>يوجد <strong>{{ overdueCount() }}</strong> طلبات تجاوزت مدة الاستجابة وتم تصعيدها.</span>
+  </div>
+}
+
+<form class="card mb-3" [formGroup]="filters" role="search" aria-label="تصفية الأعمال">
+  <div class="card-body">
+    <div class="row g-2 align-items-end">
+      <div class="col-md-4 col-xl-3">
+        <label class="form-label small" for="wb-q">بحث</label>
+        <input id="wb-q" class="form-control" formControlName="q" placeholder="رقم الطلب أو العنوان" />
+      </div>
+      <div class="col-6 col-md-4 col-xl-2">
+        <label class="form-label small" for="wb-service">الخدمة</label>
+        <select id="wb-service" class="form-select" formControlName="service">
+          <option value="">الكل</option>
+          @for (s of services; track s.key) {
+            <option [value]="s.key">{{ s.nameAr }}</option>
+          }
+        </select>
+      </div>
+      <div class="col-6 col-md-4 col-xl-2">
+        <label class="form-label small" for="wb-branch">الفرع</label>
+        <select id="wb-branch" class="form-select" formControlName="branch">
+          <option value="">الكل</option>
+          @for (b of branches; track b.id) {
+            <option [value]="b.id">{{ b.nameAr }}</option>
+          }
+        </select>
+      </div>
+      <div class="col-12 col-xl d-flex flex-wrap align-items-center gap-3">
+        <div class="form-check mb-0"><input id="wb-mine" type="checkbox" class="form-check-input" formControlName="mine" /><label class="form-check-label" for="wb-mine">المسندة إليّ</label></div>
+        <div class="form-check mb-0"><input id="wb-over" type="checkbox" class="form-check-input" formControlName="overdueOnly" /><label class="form-check-label" for="wb-over">المتأخرة فقط</label></div>
+        @if (hasFilters()) {
+          <button type="button" class="btn btn-link p-0" (click)="reset()">مسح التصفية</button>
+        }
+      </div>
+    </div>
+  </div>
+</form>
+
+@if (loading()) {
+  <div class="card"><div class="card-body"><app-skeleton-rows [count]="6" /></div></div>
+} @else if (failed()) {
+  <div class="card"><app-empty-state title="تعذر تحميل الأعمال" message="حدث خطأ أثناء جلب البيانات." /></div>
+} @else if (filtered().length === 0) {
+  <div class="card"><app-empty-state [title]="hasFilters() ? 'لا توجد نتائج مطابقة' : 'لا توجد أعمال حاليًا'" [message]="hasFilters() ? 'جرّب مسح التصفية.' : 'ستظهر هنا الطلبات الموجّهة إليك.'" /></div>
+} @else if (view() === 'kanban') {
+  <div class="row g-3 flex-nowrap flex-xl-wrap overflow-auto pb-2" role="list" aria-label="لوحة الأعمال">
+    @for (g of byColumn(); track g.col.key) {
+      <section class="col-10 col-md-6 col-xl-3" role="listitem" [attr.aria-label]="g.col.title">
+        <div class="d-flex align-items-center gap-2 mb-2">
+          <span class="badge" [class]="'bg-' + g.col.tone + '-subtle text-' + g.col.tone + '-emphasis'"><i class="bi me-1" [class]="g.col.icon" aria-hidden="true"></i>{{ g.col.title }}</span>
+          <span class="small text-muted-ar">{{ g.cards.length }}</span>
+        </div>
+        <div class="d-flex flex-column gap-2">
+          @for (c of g.cards; track c.request.id) {
+            <article class="card wb-card" [class.border-danger]="c.overdue" [class.border-2]="c.overdue">
+              <div class="card-body p-3">
+                <div class="d-flex justify-content-between gap-2 mb-1">
+                  <span class="small fw-semibold text-info-emphasis ltr-inline">{{ c.request.refNo }}</span>
+                  <app-priority-badge [priority]="c.request.priority" />
+                </div>
+                <a class="fw-semibold text-decoration-none d-block mb-1" [routerLink]="['/requests', c.request.id]">{{ c.request.titleAr }}</a>
+                <div class="small text-muted-ar mb-2">{{ serviceName(c.request) }} · {{ place(c.request) }}</div>
+                <div class="d-flex flex-wrap gap-2 align-items-center mb-2">
+                  <app-sla-badge [request]="c.request" />
+                  @if (c.request.assigneeName) {
+                    <span class="badge bg-body-secondary text-body"><i class="bi bi-person me-1" aria-hidden="true"></i>{{ c.request.assigneeName }}</span>
+                  }
+                </div>
+                <div class="d-flex gap-2">
+                  @if (c.next; as n) {
+                    <button type="button" class="btn btn-sm btn-primary flex-grow-1" [disabled]="busy() !== null" (click)="step(c)">
+                      <i class="bi me-1" [class]="n.icon" aria-hidden="true"></i>{{ n.labelAr }}
+                    </button>
+                  }
+                  <a class="btn btn-sm btn-outline-secondary" [routerLink]="['/requests', c.request.id]" aria-label="فتح الطلب"><i class="bi bi-box-arrow-up-left" aria-hidden="true"></i></a>
+                </div>
+              </div>
+            </article>
+          } @empty {
+            <div class="text-muted-ar small border border-dashed rounded-3 p-3 text-center">لا توجد طلبات</div>
+          }
+        </div>
+      </section>
+    }
+  </div>
+} @else {
+  <section class="card">
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <caption class="visually-hidden">قائمة الأعمال</caption>
+        <thead>
+          <tr><th scope="col">الطلب</th><th scope="col">الخدمة / الفرع</th><th scope="col">الأولوية</th><th scope="col">الحالة</th><th scope="col">المنفّذ</th><th scope="col">مدة الاستجابة</th><th scope="col"><span class="visually-hidden">الإجراء</span></th></tr>
+        </thead>
+        <tbody>
+          @for (c of filtered(); track c.request.id) {
+            <tr [class.table-danger]="c.overdue">
+              <td style="max-inline-size: 18rem">
+                <a class="fw-semibold text-decoration-none" [routerLink]="['/requests', c.request.id]">{{ c.request.titleAr }}</a>
+                <div class="small text-muted-ar ltr-inline">{{ c.request.refNo }}</div>
+              </td>
+              <td class="small">{{ serviceName(c.request) }}<br /><span class="text-muted-ar">{{ place(c.request) }}</span></td>
+              <td><app-priority-badge [priority]="c.request.priority" /></td>
+              <td><app-status-badge [status]="c.request.status" [holdReason]="c.request.holdReason" /></td>
+              <td class="small">{{ c.request.assigneeName ?? '—' }}</td>
+              <td><app-sla-badge [request]="c.request" /></td>
+              <td class="text-end">
+                @if (c.next; as n) {
+                  <button type="button" class="btn btn-sm btn-primary" [disabled]="busy() !== null" (click)="step(c)"><i class="bi me-1" [class]="n.icon" aria-hidden="true"></i>{{ n.labelAr }}</button>
+                }
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </section>
+}

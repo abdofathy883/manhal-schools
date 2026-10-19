@@ -1,0 +1,155 @@
+<app-page-header [title]="title()" [subtitle]="subtitle()">
+  @if (canExport()) {
+    <div ngbDropdown placement="bottom-end" class="d-inline-block">
+      <button type="button" class="btn btn-outline-primary" ngbDropdownToggle id="export-menu" [disabled]="filtered().length === 0">
+        <i class="bi bi-download me-1" aria-hidden="true"></i>تصدير
+      </button>
+      <div ngbDropdownMenu aria-labelledby="export-menu">
+        <button ngbDropdownItem type="button" (click)="exportCsv()"><i class="bi bi-filetype-csv me-2" aria-hidden="true"></i>ملف CSV</button>
+        <button ngbDropdownItem type="button" (click)="exportCsv()"><i class="bi bi-file-earmark-excel me-2" aria-hidden="true"></i>ملف Excel</button>
+        <button ngbDropdownItem type="button" (click)="print()"><i class="bi bi-file-earmark-pdf me-2" aria-hidden="true"></i>PDF / طباعة</button>
+      </div>
+    </div>
+  }
+  @if (mode() === 'mine') {
+    <a routerLink="/requests/new" class="btn btn-primary"><i class="bi bi-plus-lg me-1" aria-hidden="true"></i>طلب جديد</a>
+  }
+</app-page-header>
+
+<form class="card mb-3 no-print" [formGroup]="filters" role="search" aria-label="تصفية الطلبات">
+  <div class="card-body">
+    <div class="row g-2 align-items-end">
+      <div class="col-md-4 col-xl-3">
+        <label class="form-label small" for="flt-q">بحث</label>
+        <input id="flt-q" class="form-control" formControlName="q" placeholder="رقم الطلب أو العنوان أو مقدم الطلب" />
+      </div>
+      <div class="col-6 col-md-4 col-xl-2">
+        <label class="form-label small" for="flt-service">الخدمة</label>
+        <select id="flt-service" class="form-select" formControlName="service">
+          <option value="">الكل</option>
+          @for (s of services; track s.key) {
+            <option [value]="s.key">{{ s.nameAr }}</option>
+          }
+        </select>
+      </div>
+      <div class="col-6 col-md-4 col-xl-2">
+        <label class="form-label small" for="flt-status">الحالة</label>
+        <select id="flt-status" class="form-select" formControlName="status">
+          <option value="">الكل</option>
+          @for (s of statusOptions; track s.key) {
+            <option [value]="s.key">{{ s.label }}</option>
+          }
+        </select>
+      </div>
+      @if (mode() === 'scope') {
+        <div class="col-6 col-md-4 col-xl-2">
+          <label class="form-label small" for="flt-branch">الفرع</label>
+          <select id="flt-branch" class="form-select" formControlName="branch">
+            <option value="">الكل</option>
+            @for (b of branches; track b.id) {
+              <option [value]="b.id">{{ b.nameAr }}</option>
+            }
+          </select>
+        </div>
+      }
+      <div class="col-6 col-md-4 col-xl-2">
+        <label class="form-label small" for="flt-assignee">المنفّذ</label>
+        <select id="flt-assignee" class="form-select" formControlName="assignee">
+          <option value="">الكل</option>
+          @for (a of assignees(); track a.id) {
+            <option [value]="a.id">{{ a.name }}</option>
+          }
+        </select>
+      </div>
+      <div class="col-6 col-md-4 col-xl-2">
+        <label class="form-label small" for="flt-from">من تاريخ</label>
+        <input id="flt-from" type="date" class="form-control ltr text-start" formControlName="from" />
+      </div>
+      <div class="col-6 col-md-4 col-xl-2">
+        <label class="form-label small" for="flt-to">إلى تاريخ</label>
+        <input id="flt-to" type="date" class="form-control ltr text-start" formControlName="to" />
+      </div>
+      <div class="col-12 col-xl-auto d-flex align-items-center gap-3">
+        <div class="form-check mb-0">
+          <input id="flt-overdue" type="checkbox" class="form-check-input" formControlName="overdueOnly" />
+          <label class="form-check-label" for="flt-overdue">المتأخرة فقط</label>
+        </div>
+        @if (hasFilters()) {
+          <button type="button" class="btn btn-link p-0" (click)="reset()">مسح التصفية</button>
+        }
+      </div>
+    </div>
+  </div>
+</form>
+
+<section class="card" aria-live="polite">
+  @if (loading()) {
+    <div class="card-body"><app-skeleton-rows [count]="6" /></div>
+  } @else if (failed()) {
+    <app-empty-state title="تعذر تحميل الطلبات" message="حدث خطأ أثناء جلب البيانات. حاول مرة أخرى." />
+  } @else if (filtered().length === 0) {
+    <app-empty-state
+      [title]="hasFilters() ? 'لا توجد نتائج مطابقة' : 'لا توجد طلبات بعد'"
+      [message]="hasFilters() ? 'جرّب تعديل التصفية أو مسحها.' : 'ابدأ بتقديم طلب جديد من كتالوج الخدمات.'"
+    >
+      @if (!hasFilters() && mode() === 'mine') {
+        <a routerLink="/requests/new" class="btn btn-primary">طلب جديد</a>
+      }
+    </app-empty-state>
+  } @else {
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <caption class="visually-hidden">قائمة الطلبات</caption>
+        <thead>
+          <tr>
+            <th scope="col">الرقم المرجعي</th>
+            <th scope="col">العنوان</th>
+            <th scope="col">الخدمة</th>
+            @if (mode() === 'scope') {
+              <th scope="col">مقدم الطلب</th>
+              <th scope="col">الفرع / القسم</th>
+            }
+            <th scope="col">الأولوية</th>
+            <th scope="col">الحالة</th>
+            <th scope="col">مدة الاستجابة</th>
+            <th scope="col">التاريخ</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (r of pageItems(); track r.id) {
+            <tr class="request-row" (click)="open(r)">
+              <td><a class="fw-semibold ltr-inline" [routerLink]="['/requests', r.id]" (click)="$event.stopPropagation()">{{ r.refNo }}</a></td>
+              <td class="text-truncate" style="max-inline-size: 18rem">
+                @if (r.confidential) {
+                  <i class="bi bi-lock-fill text-danger me-1" aria-label="سرّي" role="img"></i>
+                }
+                {{ r.titleAr }}
+              </td>
+              <td>{{ serviceName(r.service) }}</td>
+              @if (mode() === 'scope') {
+                <td>{{ r.requesterName }}</td>
+                <td class="small">{{ branchName(r.branchId) }}<br /><span class="text-muted-ar">{{ departmentName(r.departmentId) }}</span></td>
+              }
+              <td><app-priority-badge [priority]="r.priority" /></td>
+              <td><app-status-badge [status]="r.status" [holdReason]="r.holdReason" /></td>
+              <td>
+                @if (isActive(r)) {
+                  <app-sla-badge [request]="r" />
+                } @else {
+                  <span class="text-muted-ar">—</span>
+                }
+              </td>
+              <td class="text-nowrap small"><span class="ltr-inline">{{ r.createdAt | arDate }}</span></td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+    <div class="card-footer bg-transparent d-flex flex-wrap justify-content-between align-items-center gap-2 no-print">
+      <span class="small text-muted-ar">عدد النتائج: <span class="ltr-inline">{{ filtered().length }}</span></span>
+      @if (filtered().length > pageSize) {
+        <ngb-pagination [collectionSize]="filtered().length" [page]="page()" (pageChange)="page.set($event)" [pageSize]="pageSize" [maxSize]="5" [rotate]="true" class="mb-0" />
+      }
+    </div>
+  }
+</section>

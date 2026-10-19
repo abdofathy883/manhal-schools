@@ -1,0 +1,97 @@
+<div class="login-bg d-flex align-items-center justify-content-center p-3">
+  <span class="circle circle-a" aria-hidden="true"></span>
+  <span class="circle circle-b" aria-hidden="true"></span>
+  <span class="circle circle-c" aria-hidden="true"></span>
+
+  <main class="login-card card border-0 position-relative" [class.shake]="shaking()">
+    <div class="card-body p-4 p-md-5">
+      <div class="text-center mb-4">
+        <app-brand-logo />
+      </div>
+
+      @if (step() === 'id') {
+        <h1 class="h4 text-center mb-1">تسجيل الدخول</h1>
+        <p class="text-center text-muted-ar mb-4">أدخل رقم الموظف لإرسال رمز التحقق إلى جوالك المسجل.</p>
+
+        <form (submit)="$event.preventDefault(); submitId()" novalidate>
+          <label class="form-label" for="employee-id">رقم الموظف</label>
+          <input
+            id="employee-id"
+            type="text"
+            class="form-control form-control-lg ltr text-start"
+            [formControl]="employeeId"
+            autocomplete="username"
+            placeholder="E1001"
+            [class.is-invalid]="idError() || (submitted() && employeeId.invalid)"
+            [attr.aria-describedby]="'employee-id-error'"
+            [attr.aria-invalid]="!!idError() || (submitted() && employeeId.invalid)"
+          />
+          <div id="employee-id-error" class="invalid-feedback" role="alert">
+            @if (idError()) {
+              {{ idError() }}
+            } @else {
+              رقم الموظف مطلوب.
+            }
+          </div>
+
+          <button type="submit" class="btn btn-primary btn-lg w-100 mt-4" [disabled]="busy()">
+            @if (busy()) {
+              <span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>
+            }
+            إرسال رمز التحقق
+          </button>
+        </form>
+
+        <div class="mt-4">
+          <div class="small text-muted-ar mb-2">جرّب أحد المستخدمين:</div>
+          <div class="d-flex flex-wrap gap-2">
+            @for (h of hints; track h.employeeId) {
+              <button type="button" class="btn btn-sm btn-outline-primary rounded-pill" (click)="fill(h.employeeId)">
+                <span class="ltr-inline">{{ h.employeeId }}</span> — {{ h.labelAr }}
+              </button>
+            }
+          </div>
+        </div>
+      } @else {
+        <h1 class="h4 text-center mb-1">رمز التحقق</h1>
+        <p class="text-center text-muted-ar mb-4">
+          أرسلنا رمزًا من 6 أرقام إلى الجوال <span class="ltr-inline fw-bold">{{ maskedMobile() }}</span>
+        </p>
+
+        <app-otp-input [(value)]="otp" [invalid]="!!otpError()" [disabled]="locked()" (completed)="verify($event)" />
+
+        <div class="text-center mt-3" aria-live="polite">
+          @if (locked()) {
+            <div class="text-danger" role="alert">
+              تم إيقاف المحاولة مؤقتًا. حاول بعد <span class="ltr-inline fw-bold">{{ lockLeft() }}</span> ثانية.
+            </div>
+          } @else if (otpError()) {
+            <div class="text-danger" role="alert">{{ otpError() }}</div>
+          }
+        </div>
+
+        <button type="button" class="btn btn-primary btn-lg w-100 mt-4" [disabled]="otp().length !== 6 || locked()" (click)="verify()">
+          تأكيد الدخول
+        </button>
+
+        <div class="d-flex justify-content-between align-items-center mt-3 small">
+          <button type="button" class="btn btn-link p-0" (click)="changeId()">
+            <i class="bi bi-arrow-right me-1" aria-hidden="true"></i>تغيير رقم الموظف
+          </button>
+          @if (resendLeft() > 0) {
+            <span class="text-muted-ar">إعادة الإرسال بعد <span class="ltr-inline">{{ resendLeft() }}</span> ثانية</span>
+          } @else {
+            <button type="button" class="btn btn-link p-0" (click)="resend()">إعادة إرسال الرمز</button>
+          }
+        </div>
+      }
+
+      <div class="demo-hint mt-4 small">
+        <i class="bi bi-info-circle me-1" aria-hidden="true"></i>
+        <strong>وضع العرض:</strong> رمز التحقق لجميع المستخدمين هو <span class="ltr-inline fw-bold">{{ demoOtp }}</span>
+      </div>
+    </div>
+  </main>
+
+  <footer class="position-absolute bottom-0 start-0 end-0 text-center text-white-50 small pb-3">{{ tagline }}</footer>
+</div>

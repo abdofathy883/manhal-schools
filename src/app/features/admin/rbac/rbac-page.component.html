@@ -1,0 +1,216 @@
+<app-page-header title="الأدوار والصلاحيات" subtitle="عدّل صلاحيات كل دور ونطاقها؛ تُطبَّق التغييرات فورًا على الجلسات الحالية وتُسجَّل في سجل التدقيق">
+  <button type="button" class="btn btn-primary" (click)="openRoleDialog('create')" [disabled]="dirty()"><i class="bi bi-plus-lg me-1" aria-hidden="true"></i>دور جديد</button>
+</app-page-header>
+
+<div class="alert alert-info small" role="note"><i class="bi bi-info-circle me-1" aria-hidden="true"></i>الحدود والصلاحيات الظاهرة قيم افتراضية للعرض وتُحدد نهائيًا في جلسة تحليل المتطلبات.</div>
+
+@if (loading()) {
+  <div class="card"><div class="card-body"><app-skeleton-rows [count]="8" /></div></div>
+} @else {
+  <ul ngbNav #nav="ngbNav" [(activeId)]="tab" class="nav-tabs mb-3">
+    <li ngbNavItem="matrix">
+      <button ngbNavLink type="button">مصفوفة الصلاحيات</button>
+      <ng-template ngbNavContent>
+        <div class="d-flex flex-wrap gap-2 align-items-end mb-3">
+          <div class="flex-grow-1" style="max-inline-size: 24rem">
+            <label class="form-label" for="rb-search">بحث في الصلاحيات</label>
+            <input id="rb-search" class="form-control" [formControl]="search" placeholder="مثال: اعتماد أو warehouse" />
+          </div>
+          <div class="small text-muted-ar">حدد الدور من العمود، وللصلاحيات المقيّدة بنطاق اختر النطاق من القائمة الصغيرة. <i class="bi bi-funnel" aria-hidden="true"></i> تعني أن الصلاحية مقيّدة بخدمات محددة.</div>
+        </div>
+
+        @if (lockReason(); as reason) {
+          <div class="alert alert-danger" role="alert"><i class="bi bi-shield-exclamation me-1" aria-hidden="true"></i>{{ reason }}</div>
+        }
+
+        <div class="rbac-wrap card">
+          <table class="rbac-matrix table table-sm align-middle mb-0">
+            <caption class="visually-hidden">مصفوفة الصلاحيات: الأدوار في الأعمدة والصلاحيات في الصفوف</caption>
+            <thead>
+              <tr>
+                <th scope="col" class="rbac-perm rbac-corner">الصلاحية</th>
+                @for (r of draft(); track r.id) {
+                  <th scope="col" class="rbac-role text-center">
+                    <div class="fw-semibold">{{ r.nameAr }}</div>
+                    @if (r.isSystem) { <span class="badge bg-secondary-subtle text-secondary-emphasis">أساسي</span> }
+                  </th>
+                }
+              </tr>
+            </thead>
+            <tbody>
+              @for (g of groups(); track g.module) {
+                <tr class="rbac-module">
+                  <th scope="row" class="rbac-perm">
+                    <button type="button" class="btn btn-sm btn-link text-decoration-none p-0 fw-bold" (click)="toggleCollapse(g.module)" [attr.aria-expanded]="!collapsed().has(g.module)">
+                      <i class="bi me-1" [class]="collapsed().has(g.module) ? 'bi-chevron-left' : 'bi-chevron-down'" aria-hidden="true"></i>{{ g.module }} <span class="text-muted-ar fw-normal">({{ g.perms.length }})</span>
+                    </button>
+                  </th>
+                  @for (r of draft(); track r.id) {
+                    <td class="text-center">
+                      <button type="button" class="btn btn-sm btn-link p-0" (click)="toggleModule(r.id, g)" [attr.aria-label]="'تحديد أو إلغاء كل صلاحيات ' + g.module + ' للدور ' + r.nameAr" ngbTooltip="تحديد / إلغاء الكل">
+                        <i class="bi bi-check2-all" aria-hidden="true"></i>
+                      </button>
+                    </td>
+                  }
+                </tr>
+                @if (!collapsed().has(g.module)) {
+                  @for (p of g.perms; track p.key) {
+                    <tr>
+                      <th scope="row" class="rbac-perm fw-normal">
+                        <div>{{ p.label }}</div>
+                        <div class="small text-muted-ar">{{ p.description }}</div>
+                      </th>
+                      @for (r of draft(); track r.id) {
+                        @let c = cell(r.id, p.key);
+                        <td class="text-center rbac-cell">
+                          <input
+                            type="checkbox"
+                            class="form-check-input"
+                            [checked]="!!c"
+                            [disabled]="locked(r.id, p.key)"
+                            (change)="toggle(r.id, p.key)"
+                            [attr.aria-label]="p.label + ' — ' + r.nameAr"
+                            [ngbTooltip]="locked(r.id, p.key) ? 'لا يمكن إزالة هذه الصلاحية من دور مدير النظام' : null"
+                          />
+                          @if (c && p.scoped) {
+                            <select class="form-select form-select-sm rbac-scope" (change)="setScope(r.id, p.key, $any($event.target).value)" [attr.aria-label]="'نطاق ' + p.label + ' — ' + r.nameAr">
+                              @for (s of scopes; track s.key) {
+                                <option [value]="s.key" [selected]="c.scope === s.key">{{ s.label }}</option>
+                              }
+                            </select>
+                          }
+                          @if (c?.services; as svc) {
+                            <i class="bi bi-funnel text-warning-emphasis ms-1" role="img" [attr.aria-label]="servicesLabel(svc)" [ngbTooltip]="servicesLabel(svc)"></i>
+                          }
+                        </td>
+                      }
+                    </tr>
+                  }
+                }
+              } @empty {
+                <tr><td [attr.colspan]="draft().length + 1" class="text-center text-muted-ar py-4">لا توجد صلاحيات مطابقة للبحث.</td></tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </ng-template>
+    </li>
+
+    <li ngbNavItem="roles">
+      <button ngbNavLink type="button">الأدوار</button>
+      <ng-template ngbNavContent>
+        @if (dirty()) {
+          <div class="alert alert-warning" role="status">لديك تغييرات غير محفوظة في المصفوفة؛ احفظها أو تراجع عنها قبل إدارة الأدوار.</div>
+        }
+        <div class="card">
+          <div class="table-responsive">
+            <table class="table align-middle mb-0">
+              <caption class="visually-hidden">الأدوار</caption>
+              <thead>
+                <tr><th scope="col">الدور</th><th scope="col">النوع</th><th scope="col">المستخدمون</th><th scope="col">الصلاحيات</th><th scope="col"><span class="visually-hidden">إجراءات</span></th></tr>
+              </thead>
+              <tbody>
+                @for (s of roleStats(); track s.role.id) {
+                  <tr>
+                    <td>
+                      <div class="fw-semibold">{{ s.role.nameAr }}</div>
+                      <div class="small text-muted-ar">{{ s.role.descriptionAr }}</div>
+                    </td>
+                    <td><span class="badge" [class]="s.role.isSystem ? 'bg-secondary-subtle text-secondary-emphasis' : 'bg-info-subtle text-info-emphasis'">{{ s.role.isSystem ? 'أساسي' : 'مخصص' }}</span></td>
+                    <td><span class="ltr-inline">{{ s.users.length }}</span></td>
+                    <td><span class="ltr-inline">{{ s.permissionCount }}</span></td>
+                    <td class="text-end">
+                      <div class="d-flex flex-wrap gap-1 justify-content-end">
+                        <button type="button" class="btn btn-sm btn-outline-secondary" (click)="toggleExpanded(s.role.id)" [attr.aria-expanded]="expandedRole() === s.role.id"><i class="bi bi-person-lines-fill me-1" aria-hidden="true"></i>تفاصيل</button>
+                        <button type="button" class="btn btn-sm btn-outline-primary" [disabled]="dirty()" (click)="openRoleDialog('clone', s.role)"><i class="bi bi-copy me-1" aria-hidden="true"></i>نسخ</button>
+                        @if (!s.role.isSystem) {
+                          <button type="button" class="btn btn-sm btn-outline-primary" [disabled]="dirty()" (click)="openRoleDialog('rename', s.role)"><i class="bi bi-pencil me-1" aria-hidden="true"></i>تعديل</button>
+                        }
+                        <span [ngbTooltip]="s.role.isSystem ? 'الأدوار الأساسية تُنسخ ولا تُحذف' : null" class="d-inline-block">
+                          <button type="button" class="btn btn-sm btn-outline-danger" [disabled]="s.role.isSystem || dirty()" (click)="deleteRole(s.role)"><i class="bi bi-trash me-1" aria-hidden="true"></i>حذف</button>
+                        </span>
+                      </div>
+                    </td>
+                  </tr>
+                  @if (expandedRole() === s.role.id) {
+                    <tr>
+                      <td colspan="5" class="bg-body-tertiary">
+                        <div class="small fw-bold mb-1">يحمل هذا الدور ({{ s.users.length }})</div>
+                        <div class="d-flex flex-wrap gap-2">
+                          @for (u of s.users; track u.id) {
+                            <span class="badge bg-body border text-body">{{ u.nameAr }} <span class="text-muted-ar ltr-inline">{{ u.employeeId }}</span></span>
+                          } @empty {
+                            <span class="text-muted-ar">لا يحمله أي مستخدم.</span>
+                          }
+                        </div>
+                      </td>
+                    </tr>
+                  }
+                }
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </ng-template>
+    </li>
+
+    <li ngbNavItem="effective">
+      <button ngbNavLink type="button">الصلاحيات الفعلية</button>
+      <ng-template ngbNavContent>
+        <div class="card" style="max-inline-size: 46rem">
+          <div class="card-body">
+            <div class="d-flex flex-wrap gap-2 align-items-end mb-3">
+              <div class="flex-grow-1">
+                <label class="form-label" for="rb-user">اختر مستخدمًا</label>
+                <select id="rb-user" class="form-select" (change)="pickUser($event)">
+                  @for (u of users(); track u.id) {
+                    <option [value]="u.id" [selected]="u.id === pickedUser()?.id">{{ u.nameAr }} — {{ u.jobTitleAr }}</option>
+                  }
+                </select>
+              </div>
+              <button type="button" class="btn btn-primary" [disabled]="!pickedUser()?.active" (click)="viewAs()"><i class="bi bi-person-badge me-1" aria-hidden="true"></i>عرض كـ هذا المستخدم</button>
+            </div>
+            @if (pickedUser(); as u) {
+              <app-effective-permissions-panel [user]="u" />
+            }
+          </div>
+        </div>
+      </ng-template>
+    </li>
+  </ul>
+  <div [ngbNavOutlet]="nav"></div>
+
+  @if (dirty() && tab() === 'matrix') {
+    <div class="rbac-bar card shadow-lg" role="region" aria-label="التغييرات غير المحفوظة">
+      <div class="card-body py-2">
+        <div class="d-flex flex-wrap align-items-center gap-2">
+          <span class="fw-bold"><i class="bi bi-exclamation-circle text-warning-emphasis me-1" aria-hidden="true"></i>{{ changes().length }} تغيير غير محفوظ</span>
+          <button type="button" class="btn btn-sm btn-link" (click)="showDiff.set(!showDiff())" [attr.aria-expanded]="showDiff()">{{ showDiff() ? 'إخفاء' : 'عرض' }} ملخص التغييرات</button>
+          <span class="flex-grow-1"></span>
+          <button type="button" class="btn btn-outline-secondary" [disabled]="saving()" (click)="revert()"><i class="bi bi-arrow-counterclockwise me-1" aria-hidden="true"></i>تراجع</button>
+          <button type="button" class="btn btn-primary" [disabled]="saving() || !!lockReason()" (click)="save()"><i class="bi bi-save me-1" aria-hidden="true"></i>حفظ التغييرات</button>
+        </div>
+        @if (showDiff()) {
+          <div class="rbac-diff mt-2">
+            @for (g of changesByRole(); track g.role) {
+              <div class="fw-semibold small mt-1">{{ g.role }}</div>
+              <ul class="small mb-1">
+                @for (c of g.items; track c.key) {
+                  <li>
+                    @switch (c.kind) {
+                      @case ('added') { <span class="text-success-emphasis">إضافة</span> }
+                      @case ('removed') { <span class="text-danger-emphasis">إزالة</span> }
+                      @default { <span class="text-info-emphasis">تغيير النطاق</span> }
+                    }
+                    — {{ c.label }}
+                    @if (c.kind === 'scope') { ({{ c.before }} ← {{ c.after }}) } @else if (c.before ?? c.after) { ({{ c.before ?? c.after }}) }
+                  </li>
+                }
+              </ul>
+            }
+          </div>
+        }
+      </div>
+    </div>
+  }
+}
