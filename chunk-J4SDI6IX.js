@@ -1,0 +1,1 @@
+import{a as r}from"./chunk-PLAEPNYD.js";import{W as t,ra as n,x as o}from"./chunk-N4GGQCXT.js";var a=class e{_now=n(new Date);now=this._now.asReadonly();constructor(){o(15e3).pipe(r()).subscribe(()=>this._now.set(new Date))}static \u0275fac=function(i){return new(i||e)};static \u0275prov=t({token:e,factory:e.\u0275fac,providedIn:"root"})};export{a};

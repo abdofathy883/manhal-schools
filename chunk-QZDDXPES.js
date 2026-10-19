@@ -1,0 +1,1 @@
+import{W as t,ra as o}from"./chunk-N4GGQCXT.js";var n=class e{_value=o(0);value=this._value.asReadonly();bump(){this._value.update(a=>a+1)}static \u0275fac=function(r){return new(r||e)};static \u0275prov=t({token:e,factory:e.\u0275fac,providedIn:"root"})};export{n as a};

@@ -1,0 +1,1 @@
+import{a as l}from"./chunk-QZDDXPES.js";import{c as n}from"./chunk-PLAEPNYD.js";import{$ as s,a,ec as u,sa as t}from"./chunk-N4GGQCXT.js";function b(f,c,e){let i=s(l),r=n(a({params:f,stream:({params:m})=>c(m)},e!==void 0?{defaultValue:e}:{})),o=!0;return t(()=>{if(i.value(),o){o=!1;return}u(()=>r.reload())}),r}export{b as a};
